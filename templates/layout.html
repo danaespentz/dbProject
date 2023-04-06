@@ -1,13 +1,17 @@
 <!DOCTYPE html>
 <html>
     <head>
-        <title>BOOKreviews</title>
+        <title>Library Online Management System</title>
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.3/css/bootstrap.min.css" integrity="sha384-Zug+QiDoJOrZ5t4lssLdxGhVrurbmBWopoEl+M6BdEfwnCJZtKxi1KgxUyJq13dy" crossorigin="anonymous">
     </head>
-    <body>
-        <div class="container">
+    <body style="height:100%; background-image: url('/static/library.jpg'); background-repeat: no-repeat; background-attachment: fixed; background-size: cover;">
+        <header style="background-color: rgb(102, 102, 102); padding: 30px; text-align: center; font-size: 35px; color:white;">
+            <h2>Library Online Management System</h2>
+        </header>
+        <div class="container mx-auto" style="min-height: 100%;position: relative;">
             {% block body %}
             {% endblock %}
         </div>
+        <footer style="background-color: rgb(102, 102, 102); padding: 10px; text-align: center; color: white; position: absolute; bottom: 0; width: 100%; height: 60px;"></footer>
     </body>
 </html>

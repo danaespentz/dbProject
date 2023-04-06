@@ -20,8 +20,8 @@ Session(app)
 
 # Set up database
 #An engine is a common interface from sqlalchemy
-engine = create_engine(os.getenv("DATABASE_URL"))
-db = scoped_session(sessionmaker(bind=engine))
+#engine = create_engine(os.getenv("DATABASE_URL"))
+#db = scoped_session(sessionmaker(bind=engine))
 
 @app.route("/")
 def index():
@@ -84,65 +84,5 @@ def register():
         db.commit()
         return render_template("success.html")
 
-@app.route('/<user_name>/<int:key>') #without the "int:", key will not be int
-def search_results(user_name, key):
-    results = db.execute("SELECT * FROM books WHERE isbn LIKE '%:key%' ", {"key": key}).fetchall()
-    return render_template("search_results.html", user_name=user_name, results=results)
-
-#when I make a get request to the route /username/book_title I get the html file with the desired arguments
-#when I submit data to the form (POST request) I do the relevant work but I dont render the template.
-#I redirect to the same route meaning I make a get request with the right, new arguments.
-@app.route("/<user_name>/<book_title>", methods=['POST', 'GET'])
-def book(user_name, book_title):
-    book = db.execute("SELECT * from books WHERE title = :book_title", {"book_title": book_title}).fetchone()
-    #api get request
-    res = requests.get("https://www.goodreads.com/book/review_counts.json",
-                        params={"key": API_KEY "isbns": book.isbn})
-    data = res.json()
-    work_ratings_count = data["books"][0]["work_ratings_count"] #when is have emfwleumena json then i should add
-    average_rating = data["books"][0]["average_rating"]         #something like that [0]
-    avg = db.execute("SELECT AVG(rating) FROM reviews WHERE book_id = :book_id", {"book_id": book.book_id}).fetchone()
-    reviews = db.execute("SELECT * FROM reviews WHERE book_id = :book_id", {"book_id": book.book_id}).fetchall()
-
-    if request.method == 'GET':
-        return render_template('book.html', user_name=user_name, book=book, reviews=reviews,
-                                avg=avg, average_rating=average_rating, work_ratings_count=work_ratings_count)
-    else:
-        #dont accept a submittion with no rating
-        rating = request.form.get('rating')
-        if rating is None:
-            return redirect(url_for('book', user_name=user_name, book_title=book_title, book=book, reviews=reviews,
-                                    avg=avg, average_rating=average_rating, work_ratings_count=work_ratings_count))
-        rating = int(rating)
-        review_text = request.form.get("review_text")
-        db.execute("INSERT INTO reviews (book_id, rating, review_text) VALUES (:book_id, :rating, :review_text)",
-                    {"book_id": book.book_id, "rating": rating, "review_text": review_text})
-        db.commit()
-        return redirect(url_for('book', user_name=user_name, book_title=book_title, book=book, reviews=reviews,
-                                avg=avg, average_rating=average_rating, work_ratings_count=work_ratings_count))
-
-@app.route("/api/book/<isbn>")
-def book_review_api(isbn):
-
-    # Make sure book exists.
-    book = db.execute("SELECT * FROM books WHERE isbn=:isbn", {"isbn" :isbn}).fetchone()
-    if book is None:
-        return jsonify({"error": "Invalid flight_id"}), 422
-    #fetch all the reviews about this particular book
-    reviews = db.execute("SELECT * FROM reviews WHERE book_id=:book_id", {"book_id" :book.book_id}).fetchall()
-    #get the total number of reviews and their average rating
-    review_count = db.execute("SELECT * from reviews").rowcount
-    avg = db.execute("SELECT AVG(rating) FROM reviews WHERE book_id = :book_id", {"book_id": book.book_id}).fetchone()
-    #Problem with jsonify: it can not use decimals so in order to pass the average_score I made it
-    #a sting. Not optimum. There is simplejson that can handle decimals and could resolve this issue.
-    return jsonify({
-            "title": book.title,
-            "author": book.author,
-            "year": book.year,
-            "isbn": book.isbn,
-            "review_count": review_count,
-            "average_score": str(avg.avg)
-        })
-
 if __name__ == "__main__":
-	main()
+    app.run()
