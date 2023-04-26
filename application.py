@@ -1,27 +1,110 @@
-#https://www.tutorialspoint.com/flask/flask_sessions.htm
-import os, requests, string
-
+import os
 from flask import Flask, session, render_template, request, redirect, url_for, jsonify
 from flask_session import Session
-from sqlalchemy import create_engine
-from sqlalchemy.orm import scoped_session, sessionmaker
+from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
-app.secret_key = os.urandom(24)
-# Check for environment variable
-if not os.getenv("DATABASE_URL"):
-    raise RuntimeError("DATABASE_URL is not set")
-# Configure session to use filesystem
-app.config["SESSION_PERMANENT"] = False
-app.config["SESSION_TYPE"] = "filesystem"
-# Create the Session object by passing it the application
-#Important: firstly i set up the "app" and then i do Session(app)
-Session(app)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.sql'  # Replace with the path to your database.sql file
+db = SQLAlchemy(app)
 
-# Set up database
-#An engine is a common interface from sqlalchemy
-#engine = create_engine(os.getenv("DATABASE_URL"))
-#db = scoped_session(sessionmaker(bind=engine))
+app.config['SECRET_KEY'] = 'mysecretkey'  # Set the secret key for Flask app
+app.config['API_KEY'] = 'myapikey'  # Set an API key for the application
+
+class User(db.Model):
+    user_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    user_name = db.Column(db.String(100), nullable=False)
+    user_password = db.Column(db.String(100), nullable=False)
+    name = db.Column(db.String(100), nullable=False)
+    school_name = db.Column(db.String(100), nullable=False)
+    role = db.Column(db.String(50), nullable=False)
+
+    def __init__(self, user_name, user_password, name, school_name, role):
+        self.user_name = user_name
+        self.user_password = user_password
+        self.name = name
+        self.school_name = school_name
+        self.role = role
+
+class School(db.Model):
+    school_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    school_name = db.Column(db.String(100), nullable=False)
+    postcode = db.Column(db.String(100), nullable=False)
+    town = db.Column(db.String(100), nullable=False)
+    telephone = db.Column(db.Integer, nullable=False)
+    email = db.Column(db.String(100), nullable=False)
+    principal_name = db.Column(db.String(100), nullable=False)
+    admin_id = db.Column(db.String(100), nullable=False)
+
+    def __init__(self, school_name, postcode, town, telephone, email, principal_name, admin_id):
+        self.school_name = school_name
+        self.postcode = postcode
+        self.town = town
+        self.telephone = telephone
+        self.email = email
+        self.principal_name = principal_name
+        self.admin_id = admin_id
+
+class Book(db.Model):
+    book_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    isbn = db.Column(db.String(100))
+    title = db.Column(db.String(100))
+    author = db.Column(db.String(100))
+    publisher = db.Column(db.String(100))
+    pages = db.Column(db.Integer)
+    copies = db.Column(db.Integer)
+    theme_categories = db.Column(db.String(100))
+    language_ = db.Column(db.String(100))
+    keywords = db.Column(db.String(100))
+    cover_page = db.Column(db.String(100))
+
+    def __init__(self, isbn, title, author, publisher, pages, copies, theme_categories, language_, keywords, cover_page):
+        self.isbn = isbn
+        self.title = title
+        self.author = author
+        self.publisher = publisher
+        self.pages = pages
+        self.copies = copies
+        self.theme_categories = theme_categories
+        self.language_ = language_
+        self.keywords = keywords
+        self.cover_page = cover_page
+
+class Report(db.Model):
+    report_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    user_id = db.Column(db.Integer, nullable=False)
+    book_id = db.Column(db.Integer, nullable=False)
+    date = db.Column(db.Integer, nullable=False)
+    issue = db.Column(db.String(100), nullable=False)
+    __table_args__ = (
+        db.ForeignKeyConstraint(['book_id'], ['book.book_id'], ondelete='RESTRICT', onupdate='CASCADE'),
+        db.ForeignKeyConstraint(['user_id'], ['user.user_id'], ondelete='RESTRICT', onupdate='CASCADE'),
+    )
+
+    def __init__(self, user_id, book_id, date, issue):
+        self.user_id = user_id
+        self.book_id = book_id
+        self.date = date
+        self.issue = issue
+
+class Rating(db.Model):
+    rating_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    user_id = db.Column(db.Integer, nullable=False)
+    book_id = db.Column(db.Integer, nullable=False)
+    rating = db.Column(db.Integer, nullable=False)
+    review_text = db.Column(db.String(100))
+    __table_args__ = (
+        db.ForeignKeyConstraint(['book_id'], ['book.book_id'], ondelete='RESTRICT', onupdate='CASCADE'),
+        db.ForeignKeyConstraint(['user_id'], ['user.user_id'], ondelete='RESTRICT', onupdate='CASCADE'),
+    )
+
+    def __init__(self, user_id, book_id, rating, review_text=None):
+        self.user_id = user_id
+        self.book_id = book_id
+        self.rating = rating
+        self.review_text = review_text
+
+with app.app_context():
+    db.create_all()
 
 @app.route("/")
 def index():
@@ -38,18 +121,13 @@ def login():
     else:
         user_name = request.form.get("user_name")
         submitted_user_password = request.form.get("submitted_user_password")
-        #fetchone() gives me the whole entry in the database [user_id, user_name, user_password]
-        #in order to get just one, I have to select it with the dot operand
-        user = db.execute("SELECT * from users WHERE user_name=:user_name",
-                            {"user_name": user_name}).fetchone()
+        user = User.query.filter_by(user_name=user_name, user_password=submitted_user_password).first()
         #if user doesnt exist render login page again
-        if user is None:
-            return redirect(url_for('index'))
-        user_password = user.user_password
-        #check for correct password
-        if user_password == submitted_user_password:
+        if user:
             session['user_name'] = user_name
-        return redirect(url_for('index'))
+            return redirect(url_for('home', user_name=user_name))
+        else:
+            return render_template('login.html', error_message="Incorrect username or password.")
 
 #arguments are passed as part of the url or as post requests from forms
 #or get requests with request.args.get without adding them in the url
@@ -75,14 +153,19 @@ def register():
     if request.method == 'GET':
         return render_template('register.html')
     else:
-        #get form information
+        # get form information
         user_name = request.form.get("user_name")
         user_password = request.form.get("user_password")
-        #Add user
-        db.execute("INSERT INTO users (user_name, user_password) VALUES (:user_name, :user_password)",
-                    {"user_name": user_name, "user_password": user_password})
-        db.commit()
-        return render_template("success.html")
+        name = request.form.get("name")
+        role = request.form.get("role")
+        school_name = request.form.get("school_name")
+
+        new_user = User(user_name=user_name, user_password=user_password, name=name, school_name=school_name, role=role)
+        db.session.add(new_user)
+        db.session.commit()
+
+        # redirect to the login page after successful registration
+        return redirect(url_for('login'))
 
 if __name__ == "__main__":
     app.run()

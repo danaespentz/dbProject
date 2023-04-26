@@ -1,4 +1,3 @@
-
 CREATE TABLE users (
     user_id SERIAL PRIMARY KEY AUTO_INCREMENT,
     user_name VARCHAR NOT NULL,
