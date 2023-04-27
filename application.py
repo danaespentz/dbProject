@@ -2,9 +2,10 @@ import os
 from flask import Flask, session, render_template, request, redirect, url_for, jsonify
 from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
+from myfaker import books
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.sql'  # Replace with the path to your database.sql file
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///database.sql'
 db = SQLAlchemy(app)
 
 app.config['SECRET_KEY'] = 'mysecretkey'  # Set the secret key for Flask app
@@ -131,7 +132,7 @@ def login():
 
 #arguments are passed as part of the url or as post requests from forms
 #or get requests with request.args.get without adding them in the url
-@app.route('/<user_name>', methods = ['GET', 'POST'])
+@app.route('/<user_name>/home', methods = ['GET', 'POST'])
 def home(user_name):
     if request.method == 'GET':
         if 'user_name' in session:
@@ -139,8 +140,29 @@ def home(user_name):
         else:
             return redirect(url_for('index'))
     else:
-        key = int(request.form.get('key'))
-        return redirect(url_for('search_results', user_name=user_name, key=key))
+        title = request.form.get("title")
+        author = request.form.get("author")
+        theme_categories = request.form.get("theme_categories")
+
+        if not title and not author and not theme_categories:
+            return render_template('search_results.html', error_message="All fields are empty !")
+
+        # Build the query dynamically based on the search parameters
+        results=list()
+        for book in books:
+            if title==book['title']:
+                results.append(book)
+            if author:
+                if author==book['author']:
+                    results.append(book)
+            if theme_categories:
+                if theme_categories==book['theme_categories']:
+                    results.append(book)
+        if not results:
+            return render_template('search_results.html', error_message="Not found.. Sorry :(")
+
+        # Render the search results template with the results
+        return render_template('search_results.html', results=results)
 
 @app.route('/logout')
 def logout():
@@ -159,13 +181,43 @@ def register():
         name = request.form.get("name")
         role = request.form.get("role")
         school_name = request.form.get("school_name")
+        if not user_name or not user_password or not name or not role or not school_name:
+            return render_template('register.html', error_message="All fields are required !")
 
         new_user = User(user_name=user_name, user_password=user_password, name=name, school_name=school_name, role=role)
         db.session.add(new_user)
         db.session.commit()
 
         # redirect to the login page after successful registration
-        return redirect(url_for('login'))
+        return redirect(url_for('success'))
+
+@app.route('/success')
+def success():
+    return render_template('success.html')
+
+@app.route('/search_results', methods=['GET', 'POST'])
+def search_results():
+    title = request.form.get('title')
+    author = request.form.get('author')
+    theme_categories = request.form.get('theme_categories')
+    
+    # Build the query dynamically based on the search parameters
+    results=list()
+    for book in books:
+        if title:
+            if title==book['title']:
+                results.append(book)
+        if author:
+            if author==book['author']:
+                results.append(book)
+        if theme_categories:
+            if theme_categories==book['theme_categories']:
+                results.append(book)
+    if not results:
+        return render_template('search_results.html', error_message="Not found.. Sorry :(")
+
+    # Render the search results template with the results
+    return render_template('search_results.html', results=results)
 
 if __name__ == "__main__":
     app.run()
