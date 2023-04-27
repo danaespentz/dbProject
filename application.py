@@ -10,6 +10,7 @@ db = SQLAlchemy(app)
 
 app.config['SECRET_KEY'] = 'mysecretkey'  # Set the secret key for Flask app
 app.config['API_KEY'] = 'myapikey'  # Set an API key for the application
+app.config['SESSION_TYPE'] = 'filesystem'
 
 class User(db.Model):
     user_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -54,11 +55,11 @@ class Book(db.Model):
     pages = db.Column(db.Integer)
     copies = db.Column(db.Integer)
     theme_categories = db.Column(db.String(100))
-    language_ = db.Column(db.String(100))
+    language = db.Column(db.String(100))
     keywords = db.Column(db.String(100))
     cover_page = db.Column(db.String(100))
 
-    def __init__(self, isbn, title, author, publisher, pages, copies, theme_categories, language_, keywords, cover_page):
+    def __init__(self, isbn, title, author, publisher, pages, copies, theme_categories, language, keywords, cover_page):
         self.isbn = isbn
         self.title = title
         self.author = author
@@ -66,7 +67,7 @@ class Book(db.Model):
         self.pages = pages
         self.copies = copies
         self.theme_categories = theme_categories
-        self.language_ = language_
+        self.language = language
         self.keywords = keywords
         self.cover_page = cover_page
 
@@ -150,7 +151,7 @@ def home(user_name):
         # Build the query dynamically based on the search parameters
         results=list()
         for book in books:
-            if title==book['title']:
+            if title.lower()==book['title'].lower():
                 results.append(book)
             if author:
                 if author==book['author']:
@@ -163,6 +164,18 @@ def home(user_name):
 
         # Render the search results template with the results
         return render_template('search_results.html', results=results)
+
+@app.route('/book_operations', methods = ['GET', 'POST'])
+def book_operations():
+        date = request.form.get("date")
+        review_text = request.form.get("review_text")
+        rating = request.form.get("rating")
+
+        if not date and not rating:
+            return render_template('book_operations.html', error_message="All fields are empty !")
+
+        # Render the search results template with the results
+        return render_template('book_operations.html', message="Your request was submitted successfully !")
 
 @app.route('/logout')
 def logout():
