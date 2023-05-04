@@ -37,6 +37,7 @@ CREATE TABLE reports (
     user_id INT NOT NULL,
     book_id INT NOT NULL,
     date INT NOT NULL,
+    due_date INT NOT NULL,
     issue VARCHAR NOT NULL
     CONSTRAINT fk_review_book FOREIGN KEY (book_id)
   REFERENCES address (books) ON DELETE RESTRICT ON UPDATE CASCADE 
