@@ -9,3 +9,4 @@ pip3 install psycopg2-binary
 pip3 install SQLAlchemy
 pip3 install -U Flask-SQLAlchemy #maybe not needed
 pip3 install requests
+pip3 install faker

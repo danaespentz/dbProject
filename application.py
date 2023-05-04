@@ -131,9 +131,8 @@ def login():
         else:
             return render_template('login.html', error_message="Incorrect username or password.")
 
-#arguments are passed as part of the url or as post requests from forms
-#or get requests with request.args.get without adding them in the url
-@app.route('/<user_name>/home', methods = ['GET', 'POST'])
+
+@app.route('/<user_name>/home', methods=['GET', 'POST'])
 def home(user_name):
     if request.method == 'GET':
         if 'user_name' in session:
@@ -146,23 +145,32 @@ def home(user_name):
         theme_categories = request.form.get("theme_categories")
 
         if not title and not authors and not theme_categories:
-            return render_template('search_results.html', error_message="All fields are empty !")
+            return render_template('home.html', user_name=user_name, error_message="All fields are empty !")
 
         # Build the query dynamically based on the search parameters
-        results=list()
+        results = []
         for book in books:
-            if title.lower()==book['title'].lower():
-                results.append(book)
-            if authors:
-                if authors==book['authors']:
-                    results.append(book)
-            if theme_categories:
-                if theme_categories==book['theme_categories']:
-                    results.append(book)
-        if not results:
-            return render_template('search_results.html', error_message="Not found.. Sorry :(")
+            if title and title.lower() != book['title'].lower():
+                continue
+            if authors and authors.lower() != book['authors'].lower():
+                continue
+            if theme_categories and theme_categories.lower() != book['theme_categories'].lower():
+                continue
+            results.append(book)
 
-        # Render the search results template with the results
+        # Store the search results in the session
+        session['results'] = results
+
+        # Redirect to the search results page
+        return redirect(url_for('search_results'))
+
+@app.route('/search_results', methods=['GET', 'POST'])
+def search_results():
+    # Retrieve the search results from the session
+    results = session.get('results', [])
+    if not results:
+        return render_template('search_results.html', error_message="Not found.. Sorry")
+    else:
         return render_template('search_results.html', results=results)
 
 @app.route('/book_operations', methods = ['GET', 'POST'])
@@ -207,30 +215,6 @@ def register():
 @app.route('/success')
 def success():
     return render_template('success.html')
-
-@app.route('/search_results', methods=['GET', 'POST'])
-def search_results():
-    title = request.form.get('title')
-    authors = request.form.get('authors')
-    theme_categories = request.form.get('theme_categories')
-    
-    # Build the query dynamically based on the search parameters
-    results=list()
-    for book in books:
-        if title:
-            if title==book['title']:
-                results.append(book)
-        if authors:
-            if authors==book['authors']:
-                results.append(book)
-        if theme_categories:
-            if theme_categories==book['theme_categories']:
-                results.append(book)
-    if not results:
-        return render_template('search_results.html', error_message="Not found.. Sorry :(")
-
-    # Render the search results template with the results
-    return render_template('search_results.html', results=results)
 
 if __name__ == "__main__":
     app.run()
