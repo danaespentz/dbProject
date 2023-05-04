@@ -7,7 +7,7 @@ fake = Faker()
 books = []
 for _ in range(100):
     title = fake.catch_phrase()
-    author = fake.name()
+    authors = fake.name(nb=3)
     isbn = fake.unique.isbn10()
     publisher = fake.company()
     pages = random.randint(100, 500)
@@ -18,7 +18,7 @@ for _ in range(100):
     cover_page = fake.url()
     book = {
         'title': title,
-        'author': author,
+        'authors': authors,
         'isbn': isbn,
         'publisher': publisher,
         'pages': pages,
@@ -31,4 +31,4 @@ for _ in range(100):
     books.append(book)
 
 for book in books:
-    print(book['author'])
+    print(book['authors'])

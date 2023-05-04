@@ -50,7 +50,7 @@ class Book(db.Model):
     book_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     isbn = db.Column(db.String(100))
     title = db.Column(db.String(100))
-    author = db.Column(db.String(100))
+    authors = db.Column(db.String(100))
     publisher = db.Column(db.String(100))
     pages = db.Column(db.Integer)
     copies = db.Column(db.Integer)
@@ -59,10 +59,10 @@ class Book(db.Model):
     keywords = db.Column(db.String(100))
     cover_page = db.Column(db.String(100))
 
-    def __init__(self, isbn, title, author, publisher, pages, copies, theme_categories, language, keywords, cover_page):
+    def __init__(self, isbn, title, authors, publisher, pages, copies, theme_categories, language, keywords, cover_page):
         self.isbn = isbn
         self.title = title
-        self.author = author
+        self.authors = authors
         self.publisher = publisher
         self.pages = pages
         self.copies = copies
@@ -142,10 +142,10 @@ def home(user_name):
             return redirect(url_for('index'))
     else:
         title = request.form.get("title")
-        author = request.form.get("author")
+        authors = request.form.get("authors")
         theme_categories = request.form.get("theme_categories")
 
-        if not title and not author and not theme_categories:
+        if not title and not authors and not theme_categories:
             return render_template('search_results.html', error_message="All fields are empty !")
 
         # Build the query dynamically based on the search parameters
@@ -153,8 +153,8 @@ def home(user_name):
         for book in books:
             if title.lower()==book['title'].lower():
                 results.append(book)
-            if author:
-                if author==book['author']:
+            if authors:
+                if authors==book['authors']:
                     results.append(book)
             if theme_categories:
                 if theme_categories==book['theme_categories']:
@@ -211,7 +211,7 @@ def success():
 @app.route('/search_results', methods=['GET', 'POST'])
 def search_results():
     title = request.form.get('title')
-    author = request.form.get('author')
+    authors = request.form.get('authors')
     theme_categories = request.form.get('theme_categories')
     
     # Build the query dynamically based on the search parameters
@@ -220,8 +220,8 @@ def search_results():
         if title:
             if title==book['title']:
                 results.append(book)
-        if author:
-            if author==book['author']:
+        if authors:
+            if authors==book['authors']:
                 results.append(book)
         if theme_categories:
             if theme_categories==book['theme_categories']:
