@@ -1,6 +1,6 @@
 # dbProject
 To DO:
-1. Authors are multiple --> change myfaker.py etc
+[DONE] 1. Authors are multiple --> change myfaker.py etc
 2. Date should be valid --> pass current TIMESTAMP
 3. Reports should be saved in the database
 4. Welcome back <username> is not stable it changes to Welcome back !
