@@ -127,6 +127,7 @@ def login():
         #if user doesnt exist render login page again
         if user:
             session['user_name'] = user_name
+            session['user_id'] = user.user_id
             return redirect(url_for('home', user_name=user_name))
         else:
             return render_template('login.html', error_message="Incorrect username or password.")
@@ -150,13 +151,16 @@ def home(user_name):
         # Build the query dynamically based on the search parameters
         results = []
         for book in books:
-            if title and title.lower() != book['title'].lower():
-                continue
-            if authors and authors.lower() != book['authors'].lower():
-                continue
-            if theme_categories and theme_categories.lower() != book['theme_categories'].lower():
-                continue
-            results.append(book)
+            if title and title.lower() == book['title'].lower():
+                results.append(book)
+            if authors:
+                for author in book['authors']:
+                    if authors.lower() == author.lower():
+                        results.append(book)
+            if theme_categories:
+                for theme_category in book['theme_categories']:
+                    if theme_categories.lower() == theme_category.lower():
+                        results.append(book)
 
         # Store the search results in the session
         session['results'] = results
@@ -178,10 +182,25 @@ def book_operations():
         date = request.form.get("date")
         review_text = request.form.get("review_text")
         rating = request.form.get("rating")
+        user_id = session['user_id']
+        book_id = user_id
+        #request.args.get('book_id')
 
         if not date and not rating:
             return render_template('book_operations.html', error_message="All fields are empty !")
-
+        if rating:
+            new_rating = Rating(user_id = user_id, book_id = book_id, rating = rating, review_text=None)
+            db.session.add(new_rating)
+            db.session.commit()
+            return render_template('book_operations.html', message="Your rating was submitted successfully !")
+        if review_text:
+            new_review = Rating(user_id = user_id, book_id = book_id, rating = None, review_text=review_text)
+            db.session.add(new_review)
+            db.session.commit()
+        if date:
+            new_reservation = Issue(user_id = user_id, book_id = book_id, date = date, issue=reserve)
+            db.session.add(new_reservation)
+            db.session.commit()
         # Render the search results template with the results
         return render_template('book_operations.html', message="Your request was submitted successfully !")
 

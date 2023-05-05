@@ -25,9 +25,9 @@
                 <tbody>
                     {% for result in results %}
                         <tr>
-                            <td style="white-space: nowrap;"><a href="{{ url_for('book_operations') }}">{{ result.isbn }}</td>
+                            <td style="white-space: nowrap;"><a href="{{ url_for('book_operations', book_id=result.isbn) }}">{{ result.isbn }}</td>
                             <td style="white-space: nowrap;">{{ result.title }}</td>
-                            <td style="white-space: nowrap;">{{ result.authors }}</td>
+                            <td style="white-space: nowrap;">{% for author in result.authors %} {{ author }}  {% endfor %}</td>
                             <td style="white-space: nowrap;">{{ result.publisher }}</td>
                             <td style="white-space: nowrap;">{{ result.pages }}</td>
                             <td style="white-space: nowrap;">{{ result.copies }}</td>
