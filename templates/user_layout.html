@@ -5,9 +5,15 @@
         <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.3/css/bootstrap.min.css" integrity="sha384-Zug+QiDoJOrZ5t4lssLdxGhVrurbmBWopoEl+M6BdEfwnCJZtKxi1KgxUyJq13dy" crossorigin="anonymous">
     </head>
     <body style="height:100%; background-image: url('/static/library.jpg'); background-repeat: no-repeat; background-attachment: fixed; background-size: cover;">
-        <header style="background-color: rgb(102, 102, 102); padding: 30px; text-align: center; font-size: 35px; color:white;">
-            <h1>Welcome back {{user_name}} !</h1>
-        </header>
+        <header style="background-color: rgb(102, 102, 102); padding: 15px; text-align: center; font-size: 25px; color:white;">
+            <div class="d-flex justify-content-start align-items-center">
+              <h1 style="margin-right: 1rem;">Welcome back !</h1>
+              <div class="d-flex align-items-center">
+                <a href="{{ url_for('my_profile') }}" class="btn btn-success mr-2">MyProfile</a>
+                <a href="{{ url_for('my_issues') }}" class="btn btn-success">MyBooks</a>
+              </div>
+            </div>
+          </header>                                
 
         <div class="container mx-auto" style="min-height: 100%;position: relative;">
             {% block body %}

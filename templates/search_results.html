@@ -7,38 +7,40 @@
     <form action="{{ url_for('search_results') }}" method="post">
         <h3>SEARCH RESULTS</h3>
         {% if results %}
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>ISBN</th>
-                        <th>Title</th>
-                        <th>Authors</th>
-                        <th>Publisher</th>
-                        <th>Pages</th>
-                        <th>Copies</th>
-                        <th>Category</th>
-                        <th>Language</th>
-                        <th>Keywords</th>
-                        <th>Cover page</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for result in results %}
+            <div style="height: 400px; overflow-y: scroll;">
+                <table class="table table-striped">
+                    <thead>
                         <tr>
-                            <td style="white-space: nowrap;"><a href="{{ url_for('book_operations', book_id=result.isbn) }}">{{ result.isbn }}</td>
-                            <td style="white-space: nowrap;">{{ result.title }}</td>
-                            <td style="white-space: nowrap;">{% for author in result.authors %} {{ author }}  {% endfor %}</td>
-                            <td style="white-space: nowrap;">{{ result.publisher }}</td>
-                            <td style="white-space: nowrap;">{{ result.pages }}</td>
-                            <td style="white-space: nowrap;">{{ result.copies }}</td>
-                            <td style="white-space: nowrap;">{% for category in result.theme_categories %} {{ category }}, {% endfor %}</td>
-                            <td style="white-space: nowrap;">{{ result.language }}</td>
-                            <td style="white-space: nowrap;">{% for keyword in result.keywords %} {{ keyword }}, {% endfor %}</td>
-                            <td style="white-space: nowrap;">{{ result.cover_page }}</td>
+                            <th>ISBN</th>
+                            <th>Title</th>
+                            <th>Authors</th>
+                            <th>Publisher</th>
+                            <th>Pages</th>
+                            <th>Copies</th>
+                            <th>Category</th>
+                            <th>Language</th>
+                            <th>Keywords</th>
+                            <th>Cover page</th>
                         </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+                    </thead>
+                    <tbody>
+                        {% for result in results %}
+                            <tr>
+                                <td style="white-space: nowrap;"><a href="{{ url_for('book_operations', isbn=result.isbn) }}">{{ result.isbn }}</td>
+                                <td style="white-space: nowrap;">{{ result.title }}</td>
+                                <td style="white-space: nowrap;">{% for author in result.authors %} {{ author }}  {% endfor %}</td>
+                                <td style="white-space: nowrap;">{{ result.publisher }}</td>
+                                <td style="white-space: nowrap;">{{ result.pages }}</td>
+                                <td style="white-space: nowrap;">{{ result.copies }}</td>
+                                <td style="white-space: nowrap;">{% for category in result.theme_categories %} {{ category }}, {% endfor %}</td>
+                                <td style="white-space: nowrap;">{{ result.language }}</td>
+                                <td style="white-space: nowrap;">{% for keyword in result.keywords %} {{ keyword }}, {% endfor %}</td>
+                                <td style="white-space: nowrap;">{{ result.cover_page }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         {% else %}
             <p style="color: red;">{{ error_message }}</p>
         {% endif %}

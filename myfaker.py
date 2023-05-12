@@ -5,6 +5,9 @@ fake = Faker()
 
 # Generate fake data for books
 books = []
+book_categories = ["Fiction", "Non-Fiction", "Mystery", "Thriller", "Biography", "History", "Science Fiction", "Romance", "Cooking", "Poetry"]
+book_languages = ["English", "Spanish", "French", "German", "Mandarin", "Japanese", "Arabic", "Russian", "Portuguese", "Italian"]
+
 for _ in range(100):
     title = fake.catch_phrase()
     authors = [fake.name() for _ in range(random.randint(1, 3))]
@@ -12,8 +15,8 @@ for _ in range(100):
     publisher = fake.company()
     pages = random.randint(100, 500)
     copies = random.randint(1, 10)
-    theme_categories = fake.words(nb=3)
-    language = fake.language_code()
+    theme_categories = random.sample(book_categories, k=random.randint(1,3))
+    language = random.choice(book_languages)
     keywords = fake.words(nb=5)
     cover_page = fake.url()
     book = {
@@ -29,6 +32,3 @@ for _ in range(100):
         'cover_page': cover_page
     }
     books.append(book)
-
-for book in books:
-    print(book['theme_categories'])

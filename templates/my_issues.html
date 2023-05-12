@@ -1,0 +1,64 @@
+{% extends "user_layout.html" %}
+
+{% block body %}
+<br></br><br></br>
+<div style="max-width: 800px; margin: auto; background-color: #f5f5f5; padding: 20px; border-radius: 10px;">
+    <form action="{{ url_for('my_issues') }}" method="post">
+        
+        {% if user_borrowings %}
+            <div style="height: 300px; overflow-y: scroll;">
+                <h5>My Borrowings</h5>
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Book Title</th>
+                            <th>Return Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for issue in user_borrowings %}
+                            <tr>
+                                <td style="white-space: nowrap;">{{ issue.date }}</td>
+                                <td style="white-space: nowrap;">{{ issue.title }}</td>
+                                <td style="white-space: nowrap;">{{ issue.issue_date }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <h5>No Borrowings</h5>
+        {% endif %}
+        {% if user_reservations %}
+            <div style="height: 300px; overflow-y: scroll;">
+                <h5>My Reservations</h5>
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Book Title</th>
+                            <th>Reservation Date</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for issue in user_reservations %}
+                            <tr>
+                                <td style="white-space: nowrap;">{{ issue.date }}</td>
+                                <td style="white-space: nowrap;">{{ issue.title }}</td>
+                                <td style="white-space: nowrap;">{{ issue.issue_date }}</td>
+                                <td style="white-space: nowrap;"><a href="{{ url_for('cancel_issue', issue_id=issue.report_id) }}">Cancel</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <p style="color:green;">{{ message }}</p>
+        {% else %}
+            <h5>No Borrowings</h5>
+        {% endif %}
+
+    </form>
+</div>
+{% endblock %}
