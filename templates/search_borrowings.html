@@ -1,0 +1,39 @@
+{% extends "user_layout.html" %}
+
+{% block body %}
+<br></br><br></br><br></br>
+
+<div style="max-width: 10000px; background-color: #f5f5f5; padding: 20px; border-radius: 10px; overflow-x: auto;">
+    <form action="{{ url_for('search_borrowings') }}" method="post">
+        <h3>Late Returns</h3>
+        {% if results %}
+            <div style="height: 400px; overflow-y: scroll;">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Student ID</th>
+                            <th>Book ID</th>
+                            <th>Title</th>
+                            <th>Return Date</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for result in results %}
+                            <tr>
+                                <td style="white-space: nowrap;">{{ result.user_id }}</td>
+                                <td style="white-space: nowrap;">{{ result.book_id }}</td>
+                                <td style="white-space: nowrap;">{{ result.title }}</td>
+                                <td style="white-space: nowrap;">{{ result.issue_date }}</td>
+                                <td style="white-space: nowrap; color: red;">{{ days }} days late</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <p style="color: red;">{{ error_message }}</p>
+        {% endif %}
+    </form>
+</div>
+{% endblock %}

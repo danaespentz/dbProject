@@ -26,7 +26,11 @@
                     <tbody>
                         {% for result in results %}
                             <tr>
-                                <td style="white-space: nowrap;"><a href="{{ url_for('book_operations', isbn=result.isbn) }}">{{ result.isbn }}</td>
+                                {% if user_name == "school_admin" %}
+                                    <td style="white-space: nowrap;"><a href="{{ url_for('admin_book_operations', isbn=result.isbn) }}">{{ result.isbn }}</td>
+                                {% else %}
+                                    <td style="white-space: nowrap;"><a href="{{ url_for('book_operations', isbn=result.isbn) }}">{{ result.isbn }}</td>
+                                {% endif %}
                                 <td style="white-space: nowrap;">{{ result.title }}</td>
                                 <td style="white-space: nowrap;">{% for author in result.authors %} {{ author }}  {% endfor %}</td>
                                 <td style="white-space: nowrap;">{{ result.publisher }}</td>

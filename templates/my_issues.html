@@ -22,6 +22,9 @@
                                 <td style="white-space: nowrap;">{{ issue.date }}</td>
                                 <td style="white-space: nowrap;">{{ issue.title }}</td>
                                 <td style="white-space: nowrap;">{{ issue.issue_date }}</td>
+                                {% if user_name == "school_admin" %}
+                                <td style="white-space: nowrap;"><a href="{{ url_for('cancel_issue', issue_id=issue.report_id) }}">Returned</td>
+                                {% endif %}
                             </tr>
                         {% endfor %}
                     </tbody>
@@ -56,7 +59,7 @@
             </div>
             <p style="color:green;">{{ message }}</p>
         {% else %}
-            <h5>No Borrowings</h5>
+            <h5>No Reservations</h5>
         {% endif %}
 
     </form>
