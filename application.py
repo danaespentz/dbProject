@@ -410,32 +410,40 @@ def search_results():
     else:
         return render_template('search_results.html', user_name=user_name, results=results)
 
-@app.route('/my_issues')
+@app.route('/my_issues',methods=['GET', 'POST'])
 def my_issues():
     user_name = session['user_name']
     if user_name == "school_admin":
         user_borrowings = db.session.query(Report).filter_by(issue='borrowed').all()
         user_reservations = db.session.query(Report).filter_by(issue='reserved').all()
+        rating_id = request.args.get('rating_id')
+        if rating_id:
+            rating = Rating.query.filter_by(rating_id=rating_id).first()
+            rating.mode = True
+            db.session.commit()
+            return render_template('my_issues.html', message=rating_id)
+        rating_approvals = db.session.query(Rating).filter_by(mode=False).all()
+        return render_template('my_issues.html', user_name=user_name, user_reservations=user_reservations, user_borrowings=user_borrowings, rating_approvals=rating_approvals)
     else:
         # Retrieve the user's issues from the database
         user_borrowings = db.session.query(Report).filter_by(user_id=session['user_id'], issue='borrowed').all()
         user_reservations = db.session.query(Report).filter_by(user_id=session['user_id'], issue='reserved').all()
-    
-    if not user_borrowings and not user_reservations:
-        return render_template('my_issues.html', user_name=user_name, message="No Reports")
-
-    return render_template('my_issues.html', user_name=user_name, user_reservations=user_reservations, user_borrowings=user_borrowings)
+        return render_template('my_issues.html', user_name=user_name, user_reservations=user_reservations, user_borrowings=user_borrowings)
 
 @app.route('/cancel_issue', methods=['GET', 'POST'])
 def cancel_issue():
     report_id = request.args.get('issue_id')
-    message='Not allowed'
     # Delete the issue with the given ID from the database
     if report_id:
         report = Report.query.filter_by(report_id=report_id).first()
+        if report.issue == "borrowed":
+            book_id = report.book_id
+            returned_book = Book.query.filter_by(book_id=book_id).first()
+            returned_book.copies = returned_book.copies + 1
+            db.session.commit()
+        
         db.session.delete(report)
         db.session.commit()
-        message = 'Reservation cancelled successfully.'    
     return redirect(url_for('my_issues'))
 
 @app.route('/admin_book_operations', methods=['GET', 'POST'])

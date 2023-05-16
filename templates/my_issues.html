@@ -4,9 +4,8 @@
 <br></br><br></br>
 <div style="max-width: 800px; margin: auto; background-color: #f5f5f5; padding: 20px; border-radius: 10px;">
     <form action="{{ url_for('my_issues') }}" method="post">
-        
+        <div style="height: 450px; overflow-y: scroll;">
         {% if user_borrowings %}
-            <div style="height: 300px; overflow-y: scroll;">
                 <h5>My Borrowings</h5>
                 <table class="table table-striped">
                     <thead>
@@ -29,12 +28,10 @@
                         {% endfor %}
                     </tbody>
                 </table>
-            </div>
         {% else %}
             <h5>No Borrowings</h5>
         {% endif %}
         {% if user_reservations %}
-            <div style="height: 300px; overflow-y: scroll;">
                 <h5>My Reservations</h5>
                 <table class="table table-striped">
                     <thead>
@@ -56,12 +53,36 @@
                         {% endfor %}
                     </tbody>
                 </table>
-            </div>
-            <p style="color:green;">{{ message }}</p>
         {% else %}
             <h5>No Reservations</h5>
         {% endif %}
-
+        {% if rating_approvals %}
+                <h5>Rating Approvals</h5>
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Book ID</th>
+                            <th>Rating</th>
+                            <th></th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for issue in rating_approvals %}
+                            <tr>
+                                <td style="white-space: nowrap;">{{ issue.book_id }}</td>
+                                <td style="white-space: nowrap; color:rgb(20, 146, 146);">{{ issue.rating }} to 5</td>
+                                <td style="white-space: nowrap;">{{ issue.review_text }}</td>
+                                <td style="white-space: nowrap;"><a href="{{ url_for('my_issues', rating_id=issue.report_id) }}">Approve</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+        {% else %}
+            <h5>No Rating Approvals</h5>
+        {% endif %}
+        <p style="color:green;">{{ message }}</p>
+        </div>
     </form>
 </div>
 {% endblock %}
