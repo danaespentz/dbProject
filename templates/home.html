@@ -17,6 +17,11 @@
         <div class="form-group">
             <input class="form-control" type="text" name="theme_categories" placeholder="Search by category.">
         </div>
+        {% if user_name == "school_admin" %}
+        <div class="form-group">
+            <input class="form-control" type="text" name="copies" placeholder="Search by copies.">
+        </div>
+        {% endif %}
         <p style="color: red;">{{ error_message }}</p>
         <div class="form-group">
             <button class="btn btn-primary">Search</button>

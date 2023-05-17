@@ -26,28 +26,23 @@
                     <tbody>
                         {% for result in results %}
                             <tr>
-                                {% if user_name == "school_admin" %}
-                                    <td style="white-space: nowrap;"><a href="{{ url_for('admin_book_operations', isbn=result.isbn) }}">{{ result.isbn }}</td>
-                                {% else %}
-                                    <td style="white-space: nowrap;"><a href="{{ url_for('book_operations', isbn=result.isbn) }}">{{ result.isbn }}</td>
-                                {% endif %}
-                                <td style="white-space: nowrap;">{{ result.title }}</td>
-                                <td style="white-space: nowrap;">{% for author in result.authors %} {{ author }}  {% endfor %}</td>
-                                <td style="white-space: nowrap;">{{ result.publisher }}</td>
-                                <td style="white-space: nowrap;">{{ result.pages }}</td>
-                                <td style="white-space: nowrap;">{{ result.copies }}</td>
-                                <td style="white-space: nowrap;">{% for category in result.theme_categories %} {{ category }}, {% endfor %}</td>
-                                <td style="white-space: nowrap;">{{ result.language }}</td>
-                                <td style="white-space: nowrap;">{% for keyword in result.keywords %} {{ keyword }}, {% endfor %}</td>
-                                <td style="white-space: nowrap;">{{ result.cover_page }}</td>
+                                <td style="white-space: nowrap;"><a href="{{ url_for('book_operations', isbn=result[1]) }}">{{ result[1] }}</td>
+                                <td style="white-space: nowrap;">{{ result[2] }}</td>
+                                <td style="white-space: nowrap;">{{ result[3] }}</td>
+                                <td style="white-space: nowrap;">{{ result[4] }}</td>
+                                <td style="white-space: nowrap;">{{ result[5] }}</td>
+                                <td style="white-space: nowrap;">{{ result[6] }}</td>
+                                <td style="white-space: nowrap;">{{ result[7] }}</td>
+                                <td style="white-space: nowrap;">{{ result[8] }}</td>
+                                <td style="white-space: nowrap;">{{ result[9] }}</td>
+                                <td style="white-space: nowrap;">{{ result[10]}}</td>
                             </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
-        {% else %}
-            <p style="color: red;">{{ error_message }}</p>
         {% endif %}
+        <p style="color: red;">{{ error_message }}</p>
     </form>
 </div>
 {% endblock %}

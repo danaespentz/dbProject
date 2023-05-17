@@ -21,19 +21,18 @@
                     <tbody>
                         {% for result in results %}
                             <tr>
-                                <td style="white-space: nowrap;">{{ result.user_id }}</td>
-                                <td style="white-space: nowrap;">{{ result.book_id }}</td>
-                                <td style="white-space: nowrap;">{{ result.title }}</td>
-                                <td style="white-space: nowrap;">{{ result.issue_date }}</td>
+                                <td style="white-space: nowrap;">{{ result[1] }}</td>
+                                <td style="white-space: nowrap;">{{ result[2] }}</td>
+                                <td style="white-space: nowrap;">{{ result[3] }}</td>
+                                <td style="white-space: nowrap;">{{ result[5] }}</td>
                                 <td style="white-space: nowrap; color: red;">{{ days }} days late</td>
                             </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
-        {% else %}
-            <p style="color: red;">{{ error_message }}</p>
-        {% endif %}
+    {% endif %}
+    <p style="color: red;">{{ error_message }}</p>
     </form>
 </div>
 {% endblock %}

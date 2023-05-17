@@ -9,19 +9,16 @@
             <div class="d-flex justify-content-start align-items-center">
               <h1 style="margin-right: 1rem;">Welcome back {{ user_name }}!</h1>
               <div class="d-flex align-items-center">
-                {% if user_name == "school_admin" %}
-                <a href="{{ url_for('home_admin', user_name=user_name) }}" class="btn btn-success mr-2">Home</a>
-                {% else %}
                 <a href="{{ url_for('home', user_name=user_name) }}" class="btn btn-success mr-2">Home</a>
-                {% endif %}
                 <a href="{{ url_for('my_profile') }}" class="btn btn-success mr-2">MyProfile</a>
                 {% if user_name == "school_admin" %}
+                <a href="{{ url_for('users') }}" class="btn btn-success mr-2">Users</a>
                 <a href="{{ url_for('my_issues') }}" class="btn btn-success mr-2">Issues</a>
                 <a href="{{ url_for('lateBorrowings') }}" class="btn btn-success mr-2">Late Borrowings</a>
+                <a href="{{ url_for('ratings') }}" class="btn btn-success mr-2">Ratings</a>
                 {% else %}
                 <a href="{{ url_for('my_issues') }}" class="btn btn-success mr-2">MyBooks</a>
                 {% endif %}
-                <a href="{{ url_for('ratings') }}" class="btn btn-success mr-2">Ratings</a>
               </div>
             </div>
           </header>                                
