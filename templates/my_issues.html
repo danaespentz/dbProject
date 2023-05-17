@@ -18,11 +18,11 @@
                     <tbody>
                         {% for issue in user_borrowings %}
                             <tr>
-                                <td style="white-space: nowrap;">{{ issue.date }}</td>
-                                <td style="white-space: nowrap;">{{ issue.title }}</td>
-                                <td style="white-space: nowrap;">{{ issue.issue_date }}</td>
+                                <td style="white-space: nowrap;">{{ issue[4] }}</td>
+                                <td style="white-space: nowrap;">{{ issue[3] }}</td>
+                                <td style="white-space: nowrap;">{{ issue[5] }}</td>
                                 {% if user_name == "school_admin" %}
-                                <td style="white-space: nowrap;"><a href="{{ url_for('cancel_issue', issue_id=issue.report_id) }}">Returned</td>
+                                <td style="white-space: nowrap;"><a href="{{ url_for('cancel_issue', issue_id=issue[0]) }}">Returned</td>
                                 {% endif %}
                             </tr>
                         {% endfor %}
@@ -45,10 +45,10 @@
                     <tbody>
                         {% for issue in user_reservations %}
                             <tr>
-                                <td style="white-space: nowrap;">{{ issue.date }}</td>
-                                <td style="white-space: nowrap;">{{ issue.title }}</td>
-                                <td style="white-space: nowrap;">{{ issue.issue_date }}</td>
-                                <td style="white-space: nowrap;"><a href="{{ url_for('cancel_issue', issue_id=issue.report_id) }}">Cancel</td>
+                                <td style="white-space: nowrap;">{{ issue[4] }}</td>
+                                <td style="white-space: nowrap;">{{ issue[3] }}</td>
+                                <td style="white-space: nowrap;">{{ issue[5] }}</td>
+                                <td style="white-space: nowrap;"><a href="{{ url_for('cancel_issue', issue_id=issue[0]) }}">Cancel</td>
                             </tr>
                         {% endfor %}
                     </tbody>
@@ -62,6 +62,7 @@
                     <thead>
                         <tr>
                             <th>Book ID</th>
+                            <th>Title</th>
                             <th>Rating</th>
                             <th></th>
                             <th></th>
@@ -70,10 +71,11 @@
                     <tbody>
                         {% for issue in rating_approvals %}
                             <tr>
-                                <td style="white-space: nowrap;">{{ issue.book_id }}</td>
-                                <td style="white-space: nowrap; color:rgb(20, 146, 146);">{{ issue.rating }} to 5</td>
-                                <td style="white-space: nowrap;">{{ issue.review_text }}</td>
-                                <td style="white-space: nowrap;"><a href="{{ url_for('my_issues', rating_id=issue.report_id) }}">Approve</td>
+                                <td style="white-space: nowrap;">{{ issue[2] }}</td>
+                                <td style="white-space: nowrap;">{{ issue[3] }}</td>
+                                <td style="white-space: nowrap; color:rgb(20, 146, 146);">{{ issue[4] }} to 5</td>
+                                <td style="white-space: nowrap;">{{ issue[5] }}</td>
+                                <td style="white-space: nowrap;"><a href="{{ url_for('my_issues', rating_id=issue[0]) }}">Approve</td>
                             </tr>
                         {% endfor %}
                     </tbody>

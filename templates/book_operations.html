@@ -5,6 +5,16 @@
 <div style="max-width: 500px; margin: auto; background-color: #f5f5f5; padding: 20px; border-radius: 10px;">
     <form action="{{ url_for('book_operations') }}" method="post">
         
+        {% if user_name == "school_admin" %}
+        <h5>Want to borrow this book?</h5>
+        <div class="form-group">
+            <input class="form-control" type="text" name="student_id" placeholder="Student ID">
+        </div>
+        <div class="form-group">
+            <button class="btn btn-primary">Request borrowing</button>
+        </div>
+        {% else %}
+
         <h5>Want to reserve this book?</h5>
         <div class="form-group">
             <input class="form-control" type="text" name="date" placeholder="Reservation Date(Pick up)">
@@ -34,17 +44,19 @@
         <div class="form-group">
             <button class="btn btn-primary">Submit</button>
         </div>
+        {% endif %}
+        {% if reviews %}
         <h5>Reviews</h5>
         {% for review in reviews %}
-            {% if review.rating %}
-                <p>{{ review.user_id }} : 
-                {{ review.rating }} /5 
-                {% if review.review_text %} : {{ review.review_text }} {% endif %}</p>
+            {% if review[4] %}
+                <p>{{ review[1] }} : 
+                {{ review[4] }} /5 
+                {% if review[5] %} : {{ review[5] }} {% endif %}</p>
             {% else %}
-                <p>{{ review.user_id }} : {{ review.review_text }}</p>
+                <p>{{ review[1] }} : {{ review[5] }}</p>
             {% endif %}
         {% endfor %}
-
+        {% endif %}
         <p style="color: green;">{{ message }}</p>
     </form>
 </div>
