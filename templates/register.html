@@ -40,8 +40,11 @@
                 <button class="btn btn-primary">Sign up</button>
             </div>
         </form>
-        <p style="color: red;">{{ error_message }}</p>
-        
+        <div style="display: flex; height: 100%;">
+            <span style="background-color: #b9e08c; color: black; padding: 10px; border-radius: 10px;">
+                {{ error_message }}
+            </span>
+        </div>        
         Already have an account? <a href="{{ url_for('login') }}">Log in</a>
     </div>
 {% endblock %}

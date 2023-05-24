@@ -17,12 +17,16 @@
         <div class="form-group">
             <input class="form-control" type="text" name="theme_categories" placeholder="Search by category.">
         </div>
-        {% if user_name == "school_admin" %}
+        {% if role == "School Admin" %}
         <div class="form-group">
             <input class="form-control" type="text" name="copies" placeholder="Search by copies.">
         </div>
         {% endif %}
-        <p style="color: red;">{{ error_message }}</p>
+        {% if error_message %}
+        <div style="display: flex; height: 100%;">
+            <span style="background-color: #e2a0d9; color: black; padding: 10px; border-radius: 10px;"> {{ error_message }}</span>
+        </div>
+        {% endif %}
         <div class="form-group">
             <button class="btn btn-primary">Search</button>
         </div>

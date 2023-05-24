@@ -5,7 +5,7 @@
 <div style="max-width: 500px; margin: auto; background-color: #f5f5f5; padding: 20px; border-radius: 10px;">
     <form action="{{ url_for('book_operations') }}" method="post">
         
-        {% if user_name == "school_admin" %}
+        {% if role == "School Admin" %}
         <h5>Want to borrow this book?</h5>
         <div class="form-group">
             <input class="form-control" type="text" name="student_id" placeholder="Student ID">
@@ -57,7 +57,13 @@
             {% endif %}
         {% endfor %}
         {% endif %}
-        <p style="color: green;">{{ message }}</p>
+        {% if message %}
+        <div style="display: flex; height: 100%;">
+            <span style="background-color: #c990eb; color: black; padding: 10px; border-radius: 10px;">
+                {{ message }}
+            </span>
+        </div> 
+        {% endif %}
     </form>
 </div>
 {% endblock %}
