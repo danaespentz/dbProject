@@ -1,0 +1,86 @@
+{% extends "user_layout.html" %}
+
+{% block body %}
+<div style="max-width: 800px; margin: auto;">
+  <div class="view-container">
+    <div class="row" style=justify-content: center;>
+    <a href="{{ url_for('view1') }}" class="view-card" style="background-color: #ebadd1;">
+      <div class="view-card-front">
+        <h3 class="card-heading">List with the total number of loans per school</h3>
+      </div>
+    </a>
+    <a href="{{ url_for('view2') }}" class="view-card" style="background-color: #c2dcf3;">
+      <div class="view-card-front">
+        <h3 class="card-heading">For a given book category, which authors belong to it and which teachers have borrowed books from that category in the last year?</h3>
+      </div>
+    </a>
+    <a href="{{ url_for('view3') }}" class="view-card" style="background-color: #b0f0ea;">
+      <div class="view-card-front">
+        <h3 class="card-heading">Find young teachers who have borrowed the most books and the number of books.</h3>
+      </div>
+    </a>
+    </div>
+    <div class="row" style=justify-content: center;>
+    <a href="{{ url_for('view4') }}" class="view-card" style="background-color: #cae7c5;">
+      <div class="view-card-front">
+        <h3 class="card-heading">Find authors whose books have not been borrowed.</h3>
+      </div>
+    </a>
+    </div>
+    <div class="row" style=justify-content: center;>
+    <a href="{{ url_for('view5') }}" class="view-card" style="background-color: #deecac;">
+      <div class="view-card-front">
+        <h3 class="card-heading">Which operators have loaned the same number of books in a year with more than 20 loans?</h3>
+      </div>
+    </a>
+    <a href="{{ url_for('view6') }}" class="view-card" style="background-color: #fad185;">
+      <div class="view-card-front">
+        <h3 class="card-heading">Many books cover more than one category. Among field pairs that are common in books, find the top-3 pairs that appeared in borrowings.</h3>
+      </div>
+    </a>
+    <a href="{{ url_for('view7') }}" class="view-card" style="background-color: #f8b0b0;">
+      <div class="view-card-front">
+        <h3 class="card-heading">Find all authors who have written at least 5 books less than the author with the most books.</h3>
+      </div>
+    </a>
+    </div>
+  </div>
+</div>
+
+<style>
+  .view-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 20px;
+    margin-bottom: 20px;
+  }
+
+  .view-card {
+    width: 200px;
+    height: 200px;
+    perspective: 1000px;
+    margin: 10px;
+    cursor: pointer;
+    transition: transform 0.6s;
+    border-radius: 10px;
+    padding: 20px;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .view-card h3,
+  .view-card p {
+    margin: 0;
+  }
+
+  .view-card .card-heading {
+    font-size: 16px;
+  }
+  
+  /* Additional Styles */
+  footer {
+    clear: both;
+  }
+</style>
+{% endblock %}

@@ -11,20 +11,33 @@
               <div class="d-flex align-items-center">
                 <a href="{{ url_for('home', user_name=user_name) }}" class="btn btn-success mr-2">Home</a>
                 <a href="{{ url_for('my_profile') }}" class="btn btn-success mr-2">MyProfile</a>
-                {% if role == "School Admin" %}
-                <a href="{{ url_for('users') }}" class="btn btn-success mr-2">Users</a>
-                <a href="{{ url_for('my_issues') }}" class="btn btn-success mr-2">Issues</a>
-                <a href="{{ url_for('lateBorrowings') }}" class="btn btn-success mr-2">Late Borrowings</a>
-                <a href="{{ url_for('ratings') }}" class="btn btn-success mr-2">Ratings</a>
-                <a href="{{ url_for('admin1') }}" class="btn btn-success mr-2">Views 1</a>
-                {% else %}
-                <a href="{{ url_for('my_issues') }}" class="btn btn-success mr-2">MyBooks</a>
+                {% if role == "School Admin" or role == "Admin" %}
+                    <a href="{{ url_for('users') }}" class="btn btn-success mr-2">Users</a>
+                    <a href="{{ url_for('my_issues') }}" class="btn btn-success mr-2">Issues</a>
+                    <a href="{{ url_for('lateBorrowings') }}" class="btn btn-success mr-2">Late Borrowings</a>
+                    <a href="{{ url_for('ratings') }}" class="btn btn-success mr-2">Ratings</a>
+                        {% if role == "Admin" %}
+                        <a href="{{ url_for('admin_views') }}" class="btn btn-success mr-2">Views</a>
+                        <a href="{{ url_for('backup') }}" class="btn btn-success mr-2" style="background-color:blue">Backup</a>
+                        <a href="{{ url_for('restore') }}" class="btn btn-success mr-2" style="background-color:blue">Restore</a>
+                        {% endif %}
+                {% elif role == "student" or role == "professor" %}
+                    <a href="{{ url_for('my_issues') }}" class="btn btn-success mr-2">MyBooks</a>
                 {% endif %}
               </div>
             </div>
           </header>                                
 
         <div class="container mx-auto" style="min-height: 100%;position: relative;">
+            {% with messages = get_flashed_messages() %}
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-info" role="alert">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
             {% block body %}
             {% endblock %}
         </div>

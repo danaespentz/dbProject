@@ -1,0 +1,52 @@
+{% extends "user_layout.html" %}
+
+{% block body %}
+<br></br><br></br><br></br>
+
+<div style="max-width: 500px; margin: auto; background-color: #f5f5f5; padding: 20px; border-radius: 10px;">
+    <form action="{{ url_for('view2') }}" method="post">
+        {% if not category %}
+        <div class="form-group">
+            <input class="form-control" style="width: 100%;" type="text" name="category" placeholder="Book Category">
+        </div>
+        <div class="form-group">
+            <button class="btn btn-primary">Search</button>
+        </div>
+        {% else %}
+        <h3>{{ category }}</h3>
+        <div style="height: 400px; overflow-y: scroll;">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Registrated Authors</th>
+                        <th>Professors interested in {{ category }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% set max_len = view1|length if view1|length > view2|length else view2|length %}
+                    {% for i in range(max_len) %}
+                    <tr>
+                        <td style="white-space: nowrap;">
+                            {% if i < view1|length %}
+                            {{ view1[i] }}
+                            {% endif %}
+                        </td>
+                        <td style="white-space: nowrap;">
+                            {% if i < view2|length %}
+                            {{ view2[i] }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+        {% if error_message %}
+        <div style="display: flex; height: 100%;">
+            <span style="background-color: #e2a0d9; color: black; padding: 10px; border-radius: 10px;"> {{ error_message }}</span>
+        </div>
+        {% endif %}
+    </form>
+</div>
+{% endblock %}

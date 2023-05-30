@@ -3,8 +3,8 @@ from datetime import date, timedelta, timezone
 from flask import Flask, session, render_template, request, redirect, url_for, jsonify, flash
 from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
-from myfaker import books
-import sqlite3
+from myfaker import books, book_categories, author_names, abstracts
+import sqlite3, re, shutil
 
 # Connect to the database or create it if it doesn't exist
 conn = sqlite3.connect('database.db')
@@ -21,6 +21,31 @@ def index():
         user_name = session['user_name']
         return redirect(url_for('home', user_name=user_name))
     return redirect(url_for('login'))
+
+@app.route('/backup', methods=['GET','POST'])
+def backup():
+    if 'user_name' in session and session['user_name'] == 'admin':
+        if not os.path.exists('backups'):
+            os.makedirs('backups')
+        backup_file = 'backups/database_copy.db'
+        shutil.copyfile('database.db', backup_file)
+        flash('Backup created successfully.', 'success')
+    else:
+        flash('You are not authorized to perform this operation.', 'danger')
+    return redirect(url_for('index'))
+
+@app.route('/restore', methods=['GET','POST'])
+def restore():
+    if 'user_name' in session and session['user_name'] == 'admin':
+        backup_file = 'backups/database_copy.db'
+        if os.path.isfile(backup_file):
+            shutil.copyfile(backup_file, 'database.db')
+            flash('Database restored successfully.', 'success')
+        else:
+            flash('Backup file does not exist.', 'danger')
+    else:
+        flash('You are not authorized to perform this operation.', 'danger')
+    return redirect(url_for('index'))
 
 @app.route('/login', methods = ['GET', 'POST'])
 def login():
@@ -47,20 +72,151 @@ def login():
 @app.route('/my_profile', methods=['GET', 'POST'])
 def my_profile():
     if request.method == 'POST':
-        if request.form['submit_button'] == 'modify':
-            # code to modify user details
-            pass
-        elif request.form['submit_button'] == 'Remove':
+        user_name = request.form.get("username")
+        name = request.form.get("name")
+        password = request.form.get("password")
+        if 'user_id' in session:
+            user_id = session['user_id']
+        else:
+            user_id = session['user'][0]
+        if user_name:
             with sqlite3.connect('database.db') as conn:
                 cursor = conn.cursor()
-                cursor.execute("DELETE FROM users WHERE user_id = ?", (session['user'][0],))
-            return redirect(url_for('login'))
-    return render_template('myprofile.html', role = session['user'][6], user_name = session['user'][1], user=session['user'])
+                cursor.execute("UPDATE users SET user_name=? WHERE user_id=?", (user_name, user_id,))
+        if name:
+            with sqlite3.connect('database.db') as conn:
+                cursor = conn.cursor()
+                cursor.execute("UPDATE users SET name=? WHERE user_id=?", (name, user_id,))
+        if password:
+            with sqlite3.connect('database.db') as conn:
+                cursor = conn.cursor()
+                cursor.execute("UPDATE users SET user_password=? WHERE user_id=?", (password, user_id,))
+        if name or password or user_name:
+            with sqlite3.connect('database.db') as conn:
+                cursor = conn.cursor()
+                cursor.execute("SELECT * FROM users WHERE user_id=?", (user_id,))
+            user = cursor.fetchone()
+            flash('Profile updated successfully.', 'success')
+            if 'user_id' not in session:
+                session.pop('user_name', None)
+                session.pop('user', None)
+                session['user'] = user
+                session['user_name'] = user[1]
+                return redirect(url_for('my_profile'))
+            else:
+                session.pop('user_id', None)
+                return redirect(url_for('users'))
+        if request.form['submit_button'] == 'Remove':
+            user_name=session['user'][1]
+            with sqlite3.connect('database.db') as conn:
+                cursor = conn.cursor()
+                user = cursor.execute("DELETE FROM users WHERE user_name = ?", (user_name,)).fetchone()
+            session.pop('user', None)
+            session.pop('user_name', None)
+            return redirect(url_for('login')) 
+    elif request.method == 'GET':
+        user_id = request.args.get("user_id")
+        editing = request.args.get("editing")
+        if user_id:
+            with sqlite3.connect('database.db') as conn:
+                cursor = conn.cursor()
+                cursor.execute("SELECT * FROM users WHERE user_id=?", (user_id,))
+            user = cursor.fetchone()  
+            session['user_id'] = user[0]
+            return render_template('myprofile.html', role=session['user'][6], user_name=session['user'][1], user=user, editing=editing)
+        return render_template('myprofile.html', role=session['user'][6], user_name=session['user'][1], user = session['user'], editing=editing)
+    return render_template('myprofile.html', role=session['user'][6], user_name=session['user'][1], user=session['user'])
+
+def reload_issues(school_id, user_id, role):
+    #Refresh "onhold" loans and report users
+    with sqlite3.connect('database.db') as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM reports WHERE issue=? AND user_id=?", ("onhold",user_id,))
+    reports=cursor.fetchall()
+    for report in reports:
+        if user_id=='11111':
+            with sqlite3.connect('database.db') as conn:
+                cursor = conn.cursor()
+                cursor.execute("SELECT * FROM books WHERE book_id=?", (report[2],))
+        else:
+            with sqlite3.connect('database.db') as conn:
+                cursor = conn.cursor()
+                cursor.execute("SELECT * FROM books WHERE book_id=? AND school_id=?", (report[2],school_id,))
+        book = cursor.fetchone() 
+        if book[6]>0:
+            flash(f"A copy of the book '{book[2]}' is now available.", 'success')
+    #Refresh reservations and remove late pickup after one week
+    with sqlite3.connect('database.db') as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM reports WHERE issue=? AND user_id=?", ("reserved",user_id,))
+    reports=cursor.fetchall()
+    for report in reports:
+        reserved_date = datetime.datetime.strptime(report[5], "%Y-%m-%d").date()
+        today = datetime.date.today()
+        days = (today - reserved_date).days
+        if days>=7:
+            with sqlite3.connect('database.db') as conn:
+                cursor = conn.cursor()
+                cursor.execute("DELETE FROM reports WHERE report_id = ?", (report[0],)).fetchone()
+            flash(f"Your reservation for the book '{report[3]}' was canceled. You were late {days} days :(", 'success')
+    #Refresh issus to find bad users
+    today = datetime.date.today()
+    if role == "School Admin" or role == "Admin":
+        bad_users = []
+        with sqlite3.connect('database.db') as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM users WHERE school_id = ?", (school_id,))
+        users = cursor.fetchall() 
+        for user in users:
+            with sqlite3.connect('database.db') as conn:
+                cursor = conn.cursor()
+                cursor.execute("SELECT * FROM reports WHERE user_id = ? AND issue = 'borrowed'", (user[0],))
+            search = cursor.fetchall()    
+            if search:
+                for result in search:
+                    issue_date = datetime.datetime.strptime(result[5], '%Y-%m-%d').date()
+                    days = (today - issue_date).days
+                    if days > 0:
+                        bad_users.append(user[0])
+        session['bad_users'] = bad_users
+
+@app.route('/new_books', methods=['GET', 'POST'])
+def new_book():
+    if request.method == 'GET':
+        user_name = session['user_name']
+        return render_template('new_book.html', user_name=user_name, role = session['user'][6])
+    else:
+        user_name = session['user_name']
+        isbn = request.form.get("isbn")
+        title = request.form.get("title")
+        authors = request.form.get("authors")
+        publisher = request.form.get("publisher")
+        pages = request.form.get("pages")
+        copies = request.form.get("copies")
+        theme_categories = request.form.get("theme_categories")
+        language = request.form.get("language")
+        keywords = request.form.get("keywords")
+        cover_page = request.form.get("cover_page")
+        abstract = request.form.get("abstract")
+        school_id = request.form.get("school_id")
+        
+        if not title or not isbn or not authors or not publisher or not pages or not copies or not theme_categories or not language or not keywords or not cover_page or not school_id:
+            return render_template('new_book.html', error_message="All fields are required !")
+
+        with sqlite3.connect('database.db') as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "INSERT INTO books (isbn, title, authors, publisher, pages, copies, theme_categories, language, keywords, cover_page, abstract, school_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (isbn, title, authors, publisher, pages, copies, theme_categories, language, keywords, cover_page, abstract, school_id)
+            )
+        flash(f"Your book was added successfully!", 'success')
+        return render_template('new_book.html', user_name=user_name, role = session['user'][6])
 
 @app.route('/<user_name>/home', methods=['GET', 'POST'])
 def home(user_name):
     if request.method == 'GET':
         if 'user_name' in session:
+            reload_issues(session['user'][5], session['user'][0], session['user'][6])
             return render_template('home.html', user_name=user_name, role = session['user'][6])
         else:
             return redirect(url_for('index'))
@@ -73,42 +229,57 @@ def home(user_name):
             return render_template('home.html', user_name=user_name, role = session['user'][6], error_message="All fields are empty !")
 
         if title:
-            with sqlite3.connect('database.db') as conn:
-                cursor = conn.cursor()
-                cursor.execute("SELECT * FROM books WHERE title=?", (title,))
+            if session['user'][0] == 11111:
+                with sqlite3.connect('database.db') as conn:
+                    cursor = conn.cursor()
+                    cursor.execute("SELECT * FROM books WHERE title=?", (title,))
+            else:    
+                with sqlite3.connect('database.db') as conn:
+                    cursor = conn.cursor()
+                    cursor.execute("SELECT * FROM books WHERE title=? AND school_id=?", (title,session['user'][5],))
             results = cursor.fetchall()
             if not results:
                 return render_template('home.html', user_name=user_name, role = session['user'][6], error_message = "There is no book with this title!")
         if authors:
-            with sqlite3.connect('database.db') as conn:
-                cursor = conn.cursor()
-                cursor.execute("""SELECT * FROM books WHERE authors LIKE ? """, (f'%{authors}%',))
+            if session['user'][0] == 11111:
+                with sqlite3.connect('database.db') as conn:
+                    cursor = conn.cursor()
+                    cursor.execute("SELECT * FROM books WHERE authors LIKE ?", (f'%{authors}%',))
+            else:
+                with sqlite3.connect('database.db') as conn:
+                    cursor = conn.cursor()
+                    cursor.execute("SELECT * FROM books WHERE authors LIKE ? AND school_id=?", (f'%{authors}%',session['user'][5],))
             results = cursor.fetchall()
             if not results:
                 return render_template('home.html', user_name=user_name, role = session['user'][6], error_message = "There are no books by this author!")
         if theme_categories:
-            with sqlite3.connect('database.db') as conn:
-                cursor = conn.cursor()
-                cursor.execute("""SELECT * FROM books WHERE theme_categories LIKE ? """, (f'%{theme_categories}%',))
+            if session['user'][0] == 11111:
+                with sqlite3.connect('database.db') as conn:
+                    cursor = conn.cursor()
+                    cursor.execute("SELECT * FROM books WHERE theme_categories LIKE ?", (f'%{theme_categories}%',))
+            else:
+                with sqlite3.connect('database.db') as conn:
+                    cursor = conn.cursor()
+                    cursor.execute("SELECT * FROM books WHERE theme_categories LIKE ? AND school_id=?", (f'%{theme_categories}%',session['user'][5],))
             results = cursor.fetchall()
             if not results:
                 return render_template('home.html', user_name=user_name, role = session['user'][6], error_message="Book Categories are: Fiction, Non-Fiction, Mystery, Thriller, Biography, History, Science Fiction, Romance, Cooking, Poetry. It is important to spell them correctly!")
         if copies:
-            with sqlite3.connect('database.db') as conn:
-                cursor = conn.cursor()
-                cursor.execute("SELECT * FROM books WHERE copies=?", (copies,))
+            if session['user'][0] == 11111:
+                with sqlite3.connect('database.db') as conn:
+                    cursor = conn.cursor()
+                    cursor.execute("SELECT * FROM books WHERE copies=?", (copies,))
+            else:
+                with sqlite3.connect('database.db') as conn:
+                    cursor = conn.cursor()
+                    cursor.execute("SELECT * FROM books WHERE copies=? AND school_id=?", (copies,session['user'][5],))
             results = cursor.fetchall()
-
-        # Store the search results in the session
         session['results'] = results
-
-        # Redirect to the search results page
         return redirect(url_for('search_results'))
 
 @app.route('/search_results', methods=['GET', 'POST'])
 def search_results():
     user_name = session['user_name']
-    # Retrieve the search results from the session
     results = session.get('results', [])
     if not results:
         return render_template('search_results.html', user_name=user_name, role = session['user'][6], error_message="Not found.. Sorry")
@@ -129,82 +300,67 @@ def lateBorrowings():
             return render_template('lateBorrowings.html', user_name=user_name, role = session['user'][6], error_message="All fields are empty !")
         
         today = datetime.date.today()
-        r = []
+        search = []
         borrow_results = []
         if name:
-            with sqlite3.connect('database.db') as conn:
-                cursor = conn.cursor()
-                cursor.execute("SELECT * FROM users WHERE name=?", (name,))
-            user = cursor.fetchone()
+            if user_name == "admin":
+                with sqlite3.connect('database.db') as conn:
+                    cursor = conn.cursor()
+                    cursor.execute("SELECT * FROM users WHERE name=?",(name,))
+                user = cursor.fetchone()
+            else:
+                with sqlite3.connect('database.db') as conn:
+                    cursor = conn.cursor()
+                    cursor.execute("SELECT * FROM users WHERE name=? AND school_id = ?",(name, str(session['user'][5]),))
+                user = cursor.fetchone()
+            if not user:
+                flash('This student is not registrated to your school as Operator', 'danger')
+                return redirect(url_for('lateBorrowings'))
             user_id = user[0]
-        if name and latedays:    
+        if latedays:    
             try:
                 days = int(latedays)
             except ValueError:
                 return render_template('lateBorrowings.html', user_name=user_name, role = session['user'][6], error_message="Invalid number of days!")
+        if name and latedays:    
             issue_date = today - datetime.timedelta(days=days)
             with sqlite3.connect('database.db') as conn:
                 cursor = conn.cursor()
-                cursor.execute("""
-                SELECT *
-                FROM reports
-                WHERE user_id = ? AND issue_date = ? AND issue = 'borrowed'
-                """, (user_id, issue_date))
-            search = cursor.fetchall()        
-        if name:
+                cursor.execute("SELECT * FROM reports WHERE user_id = ? AND issue_date = ? AND issue = 'borrowed'", (user_id, issue_date))
+            borrow_results = cursor.fetchall()      
+        elif name:
             with sqlite3.connect('database.db') as conn:
                 cursor = conn.cursor()
-                cursor.execute("""
-                SELECT *
-                FROM reports
-                WHERE user_id = ? AND issue = 'borrowed'
-                """, (user_id,))
+                cursor.execute("SELECT * FROM reports WHERE user_id = ? AND issue = 'borrowed'", (user_id,))
             search = cursor.fetchall()    
             if search:
                 for result in search:
                     issue_date = datetime.datetime.strptime(result[5], '%Y-%m-%d').date()
                     days = (today - issue_date).days
                     if days > 0:
-                        result[5] = issue_date.strftime('%a, %d %b %Y')
-                        borrow_results.append(result)
-        if latedays:
-            try:
-                days = int(latedays)
-            except ValueError:
-                return render_template('lateBorrowings.html', user_name=user_name, role = session['user'][6], error_message="Invalid number of days!")
+                        borrow_results.append([result,days])
+                return render_template('search_borrowings.html', user_name=user_name, role = session['user'][6], results=borrow_results) 
+        elif latedays:
             issue_date = today - datetime.timedelta(days=days)
             with sqlite3.connect('database.db') as conn:
                 cursor = conn.cursor()
-                cursor.execute("""
-                SELECT *
-                FROM reports
-                WHERE issue_date = ? AND issue = 'borrowed'
-                """, (issue_date,))
-            borrow_results = cursor.fetchall()   
+                cursor.execute("SELECT * FROM reports WHERE issue_date = ? AND issue = 'borrowed'", (issue_date,))
+            borrow_results = cursor.fetchall()  
         if borrow_results:   
-            session['borrow_results'] = borrow_results
-            session['days'] = days
-        
-        return redirect(url_for('search_borrowings'))
+            return render_template('search_borrowings.html', user_name=user_name, role = session['user'][6], results=borrow_results, days=days)
+        else:
+            flash("No results.. :(", 'info')
+        return redirect(url_for('lateBorrowings'))
 
-@app.route('/search_borrowings', methods=['GET', 'POST'])
+@app.route('/search_borrowings')
 def search_borrowings():
-    user_name = session['user_name']
-    # Retrieve the search results from the session
-    borrow_results = session.get('borrow_results', [])
-    days = session.get('days')
-    if not days:
-        days=0
-    if not borrow_results:
-        return render_template('search_borrowings.html', user_name=user_name, role = session['user'][6], error_message="Not found.. Sorry")
-    else:
-        return render_template('search_borrowings.html', user_name=user_name, role = session['user'][6], days=abs(days), results=borrow_results)
+    return redirect(url_for('search_borrowings'))
 
 @app.route('/ratings', methods=['GET', 'POST'])
 def ratings():
     if request.method == 'GET':
         user_name = session['user_name']
-        return render_template('ratings.html', user_name=user_name)
+        return render_template('ratings.html', user_name=user_name, role = session['user'][6])
     else:
         user_name = session['user_name']
         by_user = request.form.get("by_user")
@@ -213,25 +369,25 @@ def ratings():
         if not by_user and not by_category:
             return render_template('ratings.html', user_name=user_name, role = session['user'][6], error_message="All fields are empty !")
     
-        # Build the query dynamically based on the search parameters
         results = []
         if by_user:
-            with sqlite3.connect('database.db') as conn:
-                cursor = conn.cursor()
-                cursor.execute("SELECT * FROM users WHERE name=?", (by_user,))
+            if user_name == "admin":
+                with sqlite3.connect('database.db') as conn:
+                    cursor = conn.cursor()
+                    cursor.execute("SELECT * FROM users WHERE name=?",(by_user,))
+            else:
+                with sqlite3.connect('database.db') as conn:
+                    cursor = conn.cursor()
+                    cursor.execute("SELECT * FROM users WHERE name=? AND school_id = ?",(by_user, str(session['user'][5]),))
             user = cursor.fetchone()
             if not user:
-                return render_template('ratings.html', user_name=user_name, role = session['user'][6], error_message="There is no student with this name")
+                return render_template('ratings.html', user_name=user_name, role = session['user'][6], error_message="There is no student with this name at this school")
             user_id = user[0]
         if by_category and by_user:
             MO = 0
             with sqlite3.connect('database.db') as conn:
                 cursor = conn.cursor()
-                cursor.execute("""
-                    SELECT *
-                    FROM books
-                    WHERE theme_categories LIKE ?
-                """, (f'%{by_category}%',))
+                cursor.execute("SELECT * FROM books WHERE theme_categories LIKE ? AND school_id=?", (f'%{by_category}%',user[5],))
             search = cursor.fetchall()    
             if search:
                 count = 0 
@@ -239,18 +395,14 @@ def ratings():
                     book_id = book[0]
                     with sqlite3.connect('database.db') as conn:
                         cursor = conn.cursor()
-                        cursor.execute("""
-                            SELECT *
-                            FROM ratings
-                            WHERE book_id = ? AND user_id = ?
-                        """, (book_id, user_id))
+                        cursor.execute("SELECT * FROM ratings WHERE book_id = ? AND user_id = ?", (book_id, user_id))
                     ratings = cursor.fetchall()
                     if ratings:
                         for result in ratings:
                             count = count + 1
                             MO = MO + result[4]
                 if count:
-                    MO = MO/count 
+                    MO = round(MO / count, 2)
                 session['MO'] = MO
                 return render_template('ratings.html', user_name=user_name, role = session['user'][6], category = by_category, name = by_user, MO=MO)
             else:
@@ -259,11 +411,7 @@ def ratings():
             MO = 0
             with sqlite3.connect('database.db') as conn:
                 cursor = conn.cursor()
-                cursor.execute("""
-                    SELECT *
-                    FROM ratings
-                    WHERE user_id = ?
-                """, (user_id,))
+                cursor.execute("SELECT * FROM ratings WHERE user_id = ?", (user_id,))
             search = cursor.fetchall()
             if search:
                 count = 0 
@@ -271,19 +419,20 @@ def ratings():
                     count = count + 1
                     MO = MO + int(result[4])
                 if count:
-                    MO = MO/count 
+                    MO = round(MO / count, 2)
                 session['MO'] = MO
                 return render_template('ratings.html', user_name=user_name, role = session['user'][6], name = by_user, MO=MO)
         if by_category:
             count = 0
             MO = 0
-            with sqlite3.connect('database.db') as conn:
-                cursor = conn.cursor()
-                cursor.execute("""
-                    SELECT *
-                    FROM books
-                    WHERE theme_categories LIKE ?
-                """, (f'%{by_category}%',))
+            if session['user'][0] == 11111:
+                with sqlite3.connect('database.db') as conn:
+                    cursor = conn.cursor()
+                    cursor.execute("SELECT * FROM books WHERE theme_categories LIKE ?", (f'%{by_category}%',))
+            else:
+                with sqlite3.connect('database.db') as conn:
+                    cursor = conn.cursor()
+                    cursor.execute("SELECT * FROM books WHERE theme_categories LIKE ? AND school_id=?", (f'%{by_category}%',session['user'][5],))
             search = cursor.fetchall()
             if search:
                 for book in search:
@@ -300,7 +449,7 @@ def ratings():
                             count = count + 1
                             MO = MO + result[4]
                 if count:
-                    MO = MO/count 
+                    MO = round(MO / count, 2) 
                 session['MO'] = MO
                 return render_template('ratings.html', user_name=user_name, role = session['user'][6], category = by_category, MO=MO)
             else:
@@ -310,7 +459,7 @@ def ratings():
 @app.route('/my_issues',methods=['GET', 'POST'])
 def my_issues():
     user_name = session['user_name']
-    if user_name == "school_admin":
+    if session['user'][6] == "Admin":
         with sqlite3.connect('database.db') as conn:
             cursor = conn.cursor()
             user_borrowings = cursor.execute("SELECT * FROM reports WHERE issue='borrowed'").fetchall()
@@ -325,7 +474,24 @@ def my_issues():
                 cursor.execute("UPDATE ratings SET mode=1 WHERE rating_id=?", (rating_id,))
         with sqlite3.connect('database.db') as conn:
             cursor = conn.cursor()
-            rating_approvals = cursor.execute("SELECT * FROM ratings WHERE mode=0").fetchall()
+            rating_approvals = cursor.execute("SELECT * FROM ratings R INNER JOIN users U ON R.user_id = U.user_id WHERE R.mode=0").fetchall()
+        return render_template('my_issues.html', user_name=user_name, role = session['user'][6], user_reservations=user_reservations, user_borrowings=user_borrowings, rating_approvals=rating_approvals)   
+    if session['user'][6] == "School Admin":
+        with sqlite3.connect('database.db') as conn:
+            cursor = conn.cursor()
+            user_borrowings = cursor.execute("SELECT * FROM reports WHERE issue='borrowed' AND school_id = ?",(str(session['user'][5]),)).fetchall()
+        with sqlite3.connect('database.db') as conn:
+            cursor = conn.cursor()
+            user_reservations = cursor.execute("SELECT * FROM reports WHERE issue='reserved' AND school_id = ?",(str(session['user'][5]),)).fetchall()
+        
+        rating_id = request.args.get('rating_id')
+        if rating_id:
+            with sqlite3.connect('database.db') as conn:
+                cursor = conn.cursor()
+                cursor.execute("UPDATE ratings SET mode=1 WHERE rating_id=?", (rating_id,))
+        with sqlite3.connect('database.db') as conn:
+            cursor = conn.cursor()
+            rating_approvals = cursor.execute("SELECT * FROM ratings R INNER JOIN users U ON R.user_id = U.user_id WHERE U.school_id = ? AND R.mode=0",(str(session['user'][5]),)).fetchall()
         return render_template('my_issues.html', user_name=user_name, role = session['user'][6], user_reservations=user_reservations, user_borrowings=user_borrowings, rating_approvals=rating_approvals)
     else:
         with sqlite3.connect('database.db') as conn:
@@ -346,14 +512,10 @@ def cancel_issue():
             report = cursor.execute("SELECT * FROM reports WHERE report_id=?", (report_id,)).fetchone()
         if report[6] == "borrowed":
             book_id = report[2]
-            update_query = """
-            UPDATE books
-            SET copies = copies + 1
-            WHERE book_id = ?
-        """
+            update_query = """UPDATE books SET copies = copies + 1 WHERE book_id = ? AND school_id=?"""
             with sqlite3.connect('database.db') as conn:
                 cursor = conn.cursor()
-                cursor.execute(update_query, (book_id,))
+                cursor.execute(update_query, (book_id,session['user'][5],))
         
         with sqlite3.connect('database.db') as conn:
             cursor = conn.cursor()
@@ -361,21 +523,40 @@ def cancel_issue():
             cursor.execute("UPDATE reports SET issue = ? WHERE report_id = ?", (issue, report_id,))
     return redirect(url_for('my_issues'))
 
+@app.route('/borrowed_issue', methods=['GET', 'POST'])
+def borrowed_issue():
+    report_id = request.args.get('issue_id')
+    # Delete the issue with the given ID from the database
+    if report_id:
+        with sqlite3.connect('database.db') as conn:
+            cursor = conn.cursor()
+            report = cursor.execute("SELECT * FROM reports WHERE report_id=?", (report_id,)).fetchone()
+        with sqlite3.connect('database.db') as conn:
+            cursor = conn.cursor()
+            cursor.execute("UPDATE reports SET issue = ? WHERE report_id = ?", ("borrowed", report_id,))
+        with sqlite3.connect('database.db') as conn:
+            cursor = conn.cursor()
+            cursor.execute("UPDATE books SET copies = copies - 1 WHERE book_id = ? AND school_id=?", (report[2],session['user'][5],))
+    return redirect(url_for('my_issues'))
+
 def new_borrowing(book_id, title, student_id, start_of_week, end_of_week, copies):
     user_name = session['user_name']
-    reports_this_week_query = """
-        SELECT *
-        FROM reports
-        WHERE user_id=? AND date>=? AND date<=?
-    """
     with sqlite3.connect('database.db') as conn:
         cursor = conn.cursor()
-        cursor.execute(reports_this_week_query, (student_id, start_of_week, end_of_week))
+        cursor.execute("SELECT * FROM reports WHERE user_id = ? AND book_id = ? AND issue = 'borrowed'", (student_id, book_id,))
+    search = cursor.fetchall()
+    if search:
+        message="Before you borrow another copy of this book you have to return yours"
+        return message
+    reports_this_week_query = "SELECT * FROM reports WHERE user_id=? AND date>=? AND date<=?"
+    with sqlite3.connect('database.db') as conn:
+        cursor = conn.cursor()
+        cursor.execute(reports_this_week_query, (student_id, start_of_week, end_of_week,))
     reports_this_week = cursor.fetchall()
     
     with sqlite3.connect('database.db') as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM users WHERE user_id=?", (student_id))
+        cursor.execute("SELECT * FROM users WHERE user_id=?", (student_id,))
     user = cursor.fetchone()
     role = user[6]
     school_id = user[5]
@@ -389,22 +570,15 @@ def new_borrowing(book_id, title, student_id, start_of_week, end_of_week, copies
         message="There are no copies of this book left .. Your are in the waiting list!"
     else:
         issue="borrowed"
-        update_query = """
-            UPDATE books
-            SET copies = copies - 1
-            WHERE book_id = ?
-        """
+        update_query = "UPDATE books SET copies = copies - 1 WHERE book_id = ? AND school_id=?"
         with sqlite3.connect('database.db') as conn:
             cursor = conn.cursor()
-            cursor.execute(update_query, (book_id,))
+            cursor.execute(update_query, (book_id,session['user'][5],))
         message="The borrowing has been submitted successfully !"
     
     issue_date=date.today() + timedelta(days=14)
     return_date = date.today() + timedelta(days=14)
-    new_borrowing_query = """
-    INSERT INTO reports (user_id, book_id, title, issue_date, issue, school_id)
-    VALUES (?, ?, ?, ?, ?, ?)
-    """
+    new_borrowing_query = "INSERT INTO reports (user_id, book_id, title, issue_date, issue, school_id) VALUES (?, ?, ?, ?, ?, ?)"
     with sqlite3.connect('database.db') as conn:
         cursor = conn.cursor()
         cursor.execute(new_borrowing_query, (student_id, book_id, title, issue_date, issue, school_id))
@@ -420,7 +594,6 @@ def book_operations():
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM books WHERE isbn = ?", (isbn,))
         book = cursor.fetchone()  
-
         session['book_id'] = book[0]
         session['title'] = book[2]
         session['copies'] = book[6]
@@ -428,7 +601,7 @@ def book_operations():
             with sqlite3.connect('database.db') as conn:
                 cursor = conn.cursor()
                 cursor.execute("SELECT * FROM ratings WHERE book_id = ?", (book[0],))
-            reviews = cursor.fetchall()        
+            reviews = cursor.fetchall()  
         return render_template('book_operations.html', user_name=user_name, role = session['user'][6], reviews=reviews)
     else:
         student_id = request.form.get("student_id")
@@ -442,27 +615,32 @@ def book_operations():
         title = session['title']
         copies = session['copies']
 
-         # Cancel any expired reservations
         if issue_date:
             try:
                 date = datetime.datetime.strptime(issue_date, '%Y-%m-%d').date()
             except ValueError:                
                 return render_template('book_operations.html', user_name=user_name, role = session['user'][6], message="Invalid Date. Dates should be in the form Y-M-D, ex. 2023-05-26")  
             today = date.today()
+            if date < today:
+                return render_template('book_operations.html', user_name=user_name, role = session['user'][6], message="Invalid Date.")  
         else:
             today = datetime.date.today()
         start_of_week = today - timedelta(days=today.weekday())
         end_of_week = start_of_week + timedelta(days=6)
-        expired_reservations_query = """
-            DELETE FROM reports
-            WHERE book_id=? AND issue_date<=? AND issue='reserved'
-        """
-        with sqlite3.connect('database.db') as conn:
-            cursor = conn.cursor()
-            cursor.execute(expired_reservations_query, (book_id, today - timedelta(days=7)))
-        
+
         if student_id:
-            message = new_borrowing(book_id, title, student_id, start_of_week, end_of_week, copies)
+            bad_users = session['bad_users']
+            if int(student_id) in bad_users:
+                return render_template('book_operations.html', user_name=user_name, role = session['user'][6], message="This student doesn't meet the loan criteria")  
+            with sqlite3.connect('database.db') as conn:
+                cursor = conn.cursor()
+                cursor.execute("SELECT * FROM users WHERE user_id = ?", (student_id,))
+            user = cursor.fetchall() 
+            school_id = session['user'][5]
+            if user[0][5] == school_id:
+                message = new_borrowing(book_id, title, student_id, start_of_week, end_of_week, copies)
+            else:
+                return render_template('book_operations.html', user_name=user_name, role = session['user'][6], message="You are authorized to loan books only to your school's students!")  
             return render_template('book_operations.html', user_name=user_name, role = session['user'][6], message=message)  
 
         # Check if the user is a student or professor
@@ -471,29 +649,23 @@ def book_operations():
             cursor.execute("SELECT * FROM users WHERE user_id = ?", (user_id,))
         user = cursor.fetchall()  
         role = user[0][6]
-        if role == 'student':
-                mode=False
-        else:
-            mode=True
-        if not issue_date and not rating and not review_text and not student_id:
+        if not issue_date and not rating and not review_text:
             return render_template('book_operations.html', user_name=user_name, role = session['user'][6], message="All fields are empty !")
 
         if rating or review_text:
+            if role == 'student' and review_text:
+                mode='0'
+            else:
+                mode='1'
             with sqlite3.connect('database.db') as conn:
                 cursor = conn.cursor()
-                cursor.execute(
-                    "INSERT INTO ratings (user_id, book_id, title, rating, review_text, mode) VALUES (?, ?, ?, ?, ?, ?)",
-                    (user_id, book_id, title, rating, review_text, mode)
-                )
+                cursor.execute("INSERT INTO ratings (user_id, book_id, title, rating, review_text, mode) VALUES (?, ?, ?, ?, ?, ?)",(user_id, book_id, title, rating, review_text, mode,))
             return render_template('book_operations.html', user_name=user_name, role = session['user'][6], message="Your rating was submitted successfully !")
 
         if issue_date:
             with sqlite3.connect('database.db') as conn:
                 cursor = conn.cursor()
-                cursor.execute(
-                    "SELECT * FROM reports WHERE book_id=? AND user_id=? AND issue=? LIMIT 1",
-                    (book_id, user_id, "borrowed")
-                )
+                cursor.execute("SELECT * FROM reports WHERE book_id=? AND user_id=? AND issue=? LIMIT 1",(book_id, user_id, "borrowed",))
             borrowed = cursor.fetchone()
             if borrowed:
                 return render_template('book_operations.html', user_name=user_name, role = session['user'][6], message="Before you reserve another copy of this book you have to return yours. ")
@@ -502,21 +674,13 @@ def book_operations():
             issue_date = today - datetime.timedelta(days=1)
             with sqlite3.connect('database.db') as conn:
                 cursor = conn.cursor()
-                cursor.execute("""
-                SELECT *
-                FROM reports
-                WHERE user_id = ? AND issue_date = ? AND issue = 'borrowed'
-                """, (user_id, issue_date))
+                cursor.execute("SELECT * FROM reports WHERE user_id = ? AND issue_date = ? AND issue = 'borrowed'", (user_id, issue_date))
             search = cursor.fetchall()
             if search:
                 return render_template('book_operations.html', user_name=user_name, role = session['user'][6], message="Before you reserve this book you have to return the book you borrowed. ")
 
             # Fetch the reports within the current week for the specified user
-            reports_this_week_query = """
-                SELECT *
-                FROM reports
-                WHERE user_id=? AND date>=? AND date<=?
-            """
+            reports_this_week_query = "SELECT * FROM reports WHERE user_id=? AND date>=? AND date<=?"
             with sqlite3.connect('database.db') as conn:
                 cursor = conn.cursor()
                 cursor.execute(reports_this_week_query, (user_id, start_of_week, end_of_week))
@@ -546,8 +710,9 @@ def book_operations():
 @app.route('/logout')
 def logout():
    # remove the username from the session if it is there
-   session.pop('user_name', None)
-   return redirect(url_for('index'))
+    session.pop('user_name', None)
+    session.pop('user', None)
+    return redirect(url_for('index'))
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -570,7 +735,7 @@ def register():
             cursor = conn.cursor()
             school = cursor.execute("SELECT * FROM schools WHERE school_name=?", (school_name,)).fetchone()
         if not school:
-            return render_template('register.html', error_message="This Library Online Management System can support Schools: Athens College, Pierce, Arsakeion, Geitonas School, Kessaris, St. Lawrence College,St. Catherines College, Byron College, Campion School, ACS Athens")
+            return render_template('register.html', error_message="This Library Online Management System can support Schools: Athens College, Pierce, Arsakeion, Geitonas School, St. Catherines College, ACS Athens")
         school_id=school[0]
 
         # Insert the new user into the users table
@@ -589,6 +754,10 @@ def success():
 @app.route('/users',methods=['GET', 'POST'])
 def users():
     user_name = session['user_name']
+    if user_name == "admin":
+        selectAll=True
+    else:
+        selectAll = False
     if request.method == 'GET':
         user_id = request.args.get('user_id')
         if user_id:
@@ -597,16 +766,27 @@ def users():
                 cursor = conn.cursor()
                 new_user = cursor.execute("UPDATE users SET approved = ? WHERE user_id = ?", (approved, user_id,)).fetchone()
         approved = False
-        with sqlite3.connect('database.db') as conn:
-            cursor = conn.cursor()
-            new_users = cursor.execute("SELECT * FROM users WHERE approved= ?", (approved,)).fetchall()
-        all = request.args.get('all')
-        if all:
+        if selectAll:
             with sqlite3.connect('database.db') as conn:
                 cursor = conn.cursor()
-                approved = True
-                all_users = cursor.execute("SELECT * FROM users WHERE approved = ?",(approved,)).fetchall()
-                return render_template('users.html', user_name=user_name, role = session['user'][6], all_users=all_users)  
+                new_users = cursor.execute("SELECT * FROM users WHERE approved= ?",(approved,)).fetchall()
+        else:
+            with sqlite3.connect('database.db') as conn:
+                cursor = conn.cursor()
+                new_users = cursor.execute("SELECT * FROM users WHERE approved= ? AND school_id = ?",(approved, str(session['user'][5]),)).fetchall()
+        all = request.args.get('all')
+        if all:
+            if selectAll:
+                with sqlite3.connect('database.db') as conn:
+                    cursor = conn.cursor()
+                    approved = True
+                    all_users = cursor.execute("SELECT * FROM users WHERE approved = ?",(approved,)).fetchall()
+            else:
+                with sqlite3.connect('database.db') as conn:
+                    cursor = conn.cursor()
+                    approved = True
+                    all_users = cursor.execute("SELECT * FROM users WHERE approved = ? AND school_id = ?",(approved, str(session['user'][5]),)).fetchall()
+            return render_template('users.html', user_name=user_name, role = session['user'][6], all_users=all_users)  
         name = request.args.get('user_name')
         if name:
             with sqlite3.connect('database.db') as conn:
@@ -617,21 +797,146 @@ def users():
     else:
         by_user = request.form.get('by_user')
         if by_user:
-            with sqlite3.connect('database.db') as conn:
-                cursor = conn.cursor()
-                user = cursor.execute("SELECT * FROM users WHERE user_id=?", (by_user,)).fetchone()
+            if selectAll:
+                with sqlite3.connect('database.db') as conn:
+                    cursor = conn.cursor()
+                    user = cursor.execute("SELECT * FROM users WHERE user_id=?",(by_user,)).fetchone()
+            else:
+                with sqlite3.connect('database.db') as conn:
+                    cursor = conn.cursor()
+                    user = cursor.execute("SELECT * FROM users WHERE user_id=? AND school_id = ?",(by_user, str(session['user'][5]),)).fetchone()
             return render_template('users.html', user_name=user_name, role = session['user'][6], user=user)  
         return render_template('users.html', user_name=user_name, role = session['user'][6])  
 
-@app.route('/admin1', methods=['GET', 'POST'])
-def admin1():
+@app.route('/admin_views', methods=['GET', 'POST'])
+def admin_views():
     user_name = session['user_name']
-    with open('SQL/views.sql', 'r') as file:
-        query = file.read()
+    return render_template('admin_views.html', user_name=user_name, role = session['user'][6])
+
+@app.route('/view1', methods=['GET', 'POST'])
+def view1():
+    year = request.form.get('year')
+    monthYear = request.form.get('monthYear')
+    user_name = session['user_name']
+    if monthYear:
+        if not re.match(r'^\d{4}-\d{2}$', monthYear):
+            flash("Dates can be in the format of year (ex.2023, 2022) or monthYear (ex. 2023-05, 2023-08)", 'success')
+        else:
+            with open('SQL/views.sql', 'r') as file:
+                query1 = file.read()
+            with sqlite3.connect('database.db') as conn:
+                cursor = conn.cursor()
+                cursor.executescript(query1)
+                view1 = cursor.execute("SELECT * FROM borrowings_per_school_per_monthYear WHERE date = ?", (monthYear,))
+                results = view1.fetchall()
+            return render_template('view1.html', user_name=user_name, role=session['user'][6], view1=results)
+    if year:
+        with open('SQL/views.sql', 'r') as file:
+            query1 = file.read()
+        with sqlite3.connect('database.db') as conn:
+            cursor = conn.cursor()
+            cursor.executescript(query1)
+            view1 = cursor.execute("SELECT * FROM borrowings_per_school_per_year WHERE date = ?", (year,))
+            results = view1.fetchall()
+        return render_template('view1.html', user_name=user_name, role=session['user'][6], view1=results)
+    return render_template('view1.html', user_name=user_name, role=session['user'][6])
+
+@app.route('/view2', methods=['GET', 'POST'])
+def view2():
+    user_name = session['user_name']
+    category = request.form.get('category')
+    if category not in book_categories:
+        flash("Book Categories are: Fiction, Non-Fiction, Mystery, Thriller, Biography, History, Science Fiction, Romance, Cooking, Poetry. It is important to spell them correctly!", 'danger')
+    elif category:
+        with open('SQL/views2.sql', 'r') as file:
+            query2 = file.read()
+        with sqlite3.connect('database.db') as conn:
+            cursor = conn.cursor()
+            cursor.executescript(query2)
+            view1 = cursor.execute("SELECT name FROM borrowings_per_category WHERE category = ?", (category,))
+            results1 = view1.fetchall()
+            view2 = cursor.execute("SELECT authors FROM bookids_AND_authors_per_category WHERE theme_category = ?", (category,))
+            results2 = view2.fetchall()
+        
+        name_list1 = [name[0] for name in results1]
+        name_list2 = [name.strip() for name in results2[0][0].split(',') if name.strip()]
+        return render_template('view2.html', user_name=user_name, role=session['user'][6], category=category, view1=name_list1, view2=name_list2)
+    return render_template('view2.html', user_name=user_name, role=session['user'][6])
+
+@app.route('/view3', methods=['GET', 'POST'])
+def view3():
+    user_name = session['user_name']
+    with open('SQL/views3.sql', 'r') as file:
+        query3 = file.read()
     with sqlite3.connect('database.db') as conn:
         cursor = conn.cursor()
-        results = cursor.executescript(query)
-    return render_template('admin1.html', user_name=user_name, role = session['user'][6], results=results)
+        cursor.executescript(query3)
+        view1 = cursor.execute("SELECT * FROM borrowings_per_young_professors")
+        results = view1.fetchall()
+    return render_template('view3.html', user_name=user_name, role=session['user'][6], view3=results)
+
+@app.route('/view4', methods=['GET', 'POST'])
+def view4():
+    user_name = session['user_name']
+    with open('SQL/views4.sql', 'r') as file:
+        query4 = file.read()
+    with sqlite3.connect('database.db') as conn:
+        cursor = conn.cursor()
+        cursor.executescript(query4)
+        view4 = cursor.execute("SELECT * FROM authors_with_borrowed_books")
+        results = view4.fetchall()
+        authors=list()
+        for result in results:
+            authors.append(result[0])
+        bad_authors = set(author_names) - set(authors)
+    if not bad_authors:
+        return render_template('view4.html', user_name=user_name, role=session['user'][6], view4=authors, error_message="Sorry, all authors have borrowed books.. The list above is the authors list!")
+    return render_template('view4.html', user_name=user_name, role=session['user'][6], view4=bad_authors)
+
+@app.route('/view5', methods=['GET', 'POST'])
+def view5():
+    user_name = session['user_name']
+    with open('SQL/views5.sql', 'r') as file:
+        query5 = file.read()
+    with sqlite3.connect('database.db') as conn:
+        cursor = conn.cursor()
+        cursor.executescript(query5)
+        view5 = cursor.execute("SELECT * FROM same_loans_per_admin")
+        results = view5.fetchall()
+    if not results:
+        with sqlite3.connect('database.db') as conn:
+            cursor = conn.cursor()
+            view5 = cursor.execute("SELECT * FROM loans_per_admin")
+        return render_template('view5.html', user_name=user_name, role=session['user'][6], view5=view5, error_message="Sorry, there are no such operators..")
+    return render_template('view5.html', user_name=user_name, role=session['user'][6], view5=results)
+
+@app.route('/view6', methods=['GET', 'POST'])
+def view6():
+    user_name = session['user_name']
+    with open('SQL/views6.sql', 'r') as file:
+        query6 = file.read()
+    with sqlite3.connect('database.db') as conn:
+        cursor = conn.cursor()
+        cursor.executescript(query6)
+        view6 = cursor.execute("SELECT category1, category2, common_book_count FROM common_book_ids_per_category_pair LIMIT 3;")
+        results = view6.fetchall()
+    if not results:
+        return render_template('view6.html', user_name=user_name, role=session['user'][6], error_message="Sorry, something went wrong..")
+    return render_template('view6.html', user_name=user_name, role=session['user'][6], view6=results)
+
+@app.route('/view7', methods=['GET', 'POST'])
+def view7():
+    user_name = session['user_name']
+    with open('SQL/views7.sql', 'r') as file:
+        query7 = file.read()
+    with sqlite3.connect('database.db') as conn:
+        cursor = conn.cursor()
+        cursor.executescript(query7)
+        view7 = cursor.execute("SELECT * FROM books_per_author")
+        results = view7.fetchall()
+    if not results:
+        return render_template('view7.html', user_name=user_name, role=session['user'][6], error_message="Sorry, something went wrong..")
+    return render_template('view7.html', user_name=user_name, role=session['user'][6], view7=results)
 
 if __name__ == "__main__":
     app.run()

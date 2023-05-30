@@ -6,44 +6,92 @@
     <div style="height: 450px;">
         <div class="container">
             <h2>My Profile</h2>
-            <table class="table">
-                <tbody>
-                    <tr>
-                        <td>Student ID:</td>
-                        <td>{{ user[0] }}</td>
-                    </tr>
-                    <tr>
-                        <td>Username:</td>
-                        <td>{{ user[1] }}</td>
-                    </tr>
-                    <tr>
-                        <td>Name:</td>
-                        <td>{{ user[3] }}</td>
-                    </tr>
-                    <tr>
-                        <td>Password:</td>
-                        <td>{{ user[2] }}</td>
-                    </tr>                    
-                    <tr>
-                        <td>Age:</td>
-                        <td>{{ user[4] }}</td>
-                    </tr>
-                    <tr>
-                        <td>School ID:</td>
-                        <td>{{ user[5] }}</td>
-                    </tr>
-                    <tr>
-                        <td>Role:</td>
-                        <td>{{ user[6] }}</td>
-                    </tr>
-                </tbody>
-            </table>
-            <div class="btn-group">
-                <a href="{{ url_for('my_profile') }}" class="btn btn-primary">Modify</a>
-                <form method="POST">
-                    <button class="btn btn-danger" name="submit_button" value="Remove">Remove</button>
+            {% if editing %}
+                <form action="{{ url_for('my_profile') }}" method="POST">
+                    <table class="table">
+                        <tbody>
+                            <tr>
+                                <td>Student ID:</td>
+                                <td>{{ user[0] }}</td>
+                            </tr>
+                            <tr>
+                                <td>Username:</td>
+                                <td><input type="text" name="username" value="{{ user[1] }}"></td>
+                            </tr>
+                            <tr>
+                                <td>Name:</td>
+                                <td><input type="text" name="name" value="{{ user[3] }}"></td>
+                            </tr>
+                            <tr>
+                                <td>Password:</td>
+                                <td><input type="password" name="password" value="{{ user[2] }}"></td>
+                            </tr>                    
+                            <tr>
+                                <td>Age:</td>
+                                <td>{{ user[4] }}</td>
+                            </tr>
+                            <tr>
+                                <td>School ID:</td>
+                                <td>{{ user[5] }}</td>
+                            </tr>
+                            <tr>
+                                <td>Role:</td>
+                                <td>{{ user[6] }}</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="btn-group">
+                        <button type="submit" class="btn btn-success" name="submit_button" value="Save">Save</button>
+                        <a href="{{ url_for('my_profile') }}" class="btn btn-secondary">Cancel</a>
+                    </div>
                 </form>
+            {% else %}
+                <table class="table">
+                    <tbody>
+                        <tr>
+                            <td>Student ID:</td>
+                            <td>{{ user[0] }}</td>
+                        </tr>
+                        <tr>
+                            <td>Username:</td>
+                            <td>{{ user[1] }}</td>
+                        </tr>
+                        <tr>
+                            <td>Name:</td>
+                            <td>{{ user[3] }}</td>
+                        </tr>
+                        <tr>
+                            <td>Password:</td>
+                            <td>{{ user[2] }}</td>
+                        </tr>                    
+                        <tr>
+                            <td>Age:</td>
+                            <td>{{ user[4] }}</td>
+                        </tr>
+                        <tr>
+                            <td>School ID:</td>
+                            <td>{{ user[5] }}</td>
+                        </tr>
+                        <tr>
+                            <td>Role:</td>
+                            <td>{{ user[6] }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+                {% if role == "professor" or role == "School Admin" or role == "Admin" %}
+                <div class="btn-group">
+                    <a href="{{ url_for('my_profile', editing=1) }}" class="btn btn-primary">Modify</a>
+                    <form method="POST">
+                        <button class="btn btn-danger" name="submit_button" value="Remove">Remove</button>
+                    </form>
+                </div>
+                {% endif %}
+            {% endif %}
+            {% if error_message %}
+            <div style="display: flex; height: 100%;">
+                <span style="background-color: #e2a0d9; color: black; padding: 10px; border-radius: 10px;"> {{ error_message }}</span>
             </div>
+            {% endif %}
         </div>
     </div>
 </div>

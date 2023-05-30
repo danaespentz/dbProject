@@ -16,11 +16,11 @@
             </div>
 
             <div class="form-group">
-                <button class="btn btn-primary">Log in</button>
+                <button class="btn btn-primary" style="color:white; background-color:rgb(116, 81, 17); box-shadow: 0px 0px 2px 2px rgb(116, 81, 17);border-color: rgb(116, 81, 17);">Log in</button>
             </div>
 
         </form>
-        <p style="color: red;">{{ error_message }}</p>
-        Not a member yet? <a href="{{ url_for('register') }}">Sign up</a>
+        <p style="color: rgb(99, 22, 22);">{{ error_message }}</p>
+        <p> Not a member yet? <a href="{{ url_for('register') }}" style="color:rgb(116, 81, 17);">Sign up</a></p>
     </div>
 {% endblock %}

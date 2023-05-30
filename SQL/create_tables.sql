@@ -50,6 +50,7 @@ CREATE TABLE IF NOT EXISTS books (
     language TEXT,
     keywords TEXT,
     cover_page TEXT,
+    abstract TEXT, 
     school_id INTEGER,
     FOREIGN KEY (school_id) REFERENCES schools (school_id) ON DELETE RESTRICT ON UPDATE CASCADE
 );

@@ -21,18 +21,18 @@
                     <tbody>
                         {% for result in results %}
                             <tr>
-                                <td style="white-space: nowrap;">{{ result[1] }}</td>
-                                <td style="white-space: nowrap;">{{ result[2] }}</td>
-                                <td style="white-space: nowrap;">{{ result[3] }}</td>
-                                <td style="white-space: nowrap;">{{ result[5] }}</td>
-                                <td style="white-space: nowrap; color: red;">{{ days }} days late</td>
+                                <td style="white-space: nowrap;">{% if days %} {{ result[1] }} {% else %} {{ result[0][1] }} {% endif %}</td>
+                                <td style="white-space: nowrap;">{% if days %} {{ result[2] }} {% else %} {{ result[0][2] }} {% endif %}</td>
+                                <td style="white-space: nowrap;">{% if days %} {{ result[3] }} {% else %} {{ result[0][3] }} {% endif %}</td>
+                                <td style="white-space: nowrap;">{% if days %} {{ result[4] }} {% else %} {{ result[0][4] }} {% endif %}</td>
+                                <td style="white-space: nowrap; color: red;">{% if days %} {{ days }} {% else %} {{ result[1] }} {% endif %} days late</td>
                             </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             </div>
-    {% endif %}
-    <p style="color: red;">{{ error_message }}</p>
+        {% endif %}
+        <p style="color: red;">{{ error_message }}</p>
     </form>
 </div>
 {% endblock %}

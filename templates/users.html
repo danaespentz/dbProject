@@ -57,7 +57,8 @@
                                 <td style="white-space: nowrap;">{{ user[4] }}</td>
                                 <td style="white-space: nowrap;">{{ user[5] }}</td>
                                 <td style="white-space: nowrap;">{{ user[6] }}</td>
-                                <td style="white-space: nowrap; color:red"><a href="{{ url_for('users', user_name=user[1]) }}">Remove</td>
+                                <td style="white-space: nowrap;"><a href="{{ url_for('my_profile', user_id=user[0], editing=1) }}">Edit</td>
+                                <td style="white-space: nowrap;"><a href="{{ url_for('users', user_name=user[1]) }}">Remove</td>
                             </tr>
                         {% endfor %}
                     </tbody>

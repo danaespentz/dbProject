@@ -1,4 +1,4 @@
-CREATE VIEW book_ids_per_category AS
+CREATE VIEW IF NOT EXISTS book_ids_per_category AS
 SELECT DISTINCT A.theme_category AS category, B.book_id AS book_id
 FROM bookids_AND_authors_per_category A
 INNER JOIN books B ON instr(A.book_ids, B.book_id) > 0
@@ -6,7 +6,7 @@ INNER JOIN reports R ON R.book_id = B.book_id
 WHERE (R.issue = 'borrowed' OR R.issue = 'returned')
 GROUP BY A.theme_category, B.book_id;
 
-CREATE VIEW common_book_ids_per_category_pair AS
+CREATE VIEW IF NOT EXISTS common_book_ids_per_category_pair AS
 SELECT category1, category2, COUNT(*) AS common_book_count
 FROM (
   SELECT DISTINCT A.category AS category1, B.category AS category2, B.book_id AS book_id

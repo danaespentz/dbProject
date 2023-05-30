@@ -1,7 +1,7 @@
 {% extends "user_layout.html" %}
 
 {% block body %}
-<br></br><br></br><br></br>
+<br></br><br></br>
 
 <div style="max-width: 10000px; background-color: #f5f5f5; padding: 20px; border-radius: 10px; overflow-x: auto;">
     <form action="{{ url_for('search_results') }}" method="post">
@@ -26,8 +26,8 @@
                     <tbody>
                         {% for result in results %}
                             <tr>
-                                <td style="white-space: nowrap;"><a href="{{ url_for('book_operations', isbn=result[1]) }}">{{ result[1] }}</td>
-                                <td style="white-space: nowrap;">{{ result[2] }}</td>
+                                <td style="white-space: nowrap;color: rgb(112, 94, 15);"><a style="color: rgb(112, 94, 15);" href="{{ url_for('book_operations', isbn=result[1]) }}">{{ result[1] }}</td>
+                                <td style="white-space: nowrap; color: rgb(170, 147, 43);"><a style="color: rgb(170, 147, 43);" href="#" onclick="show('{{ result[11] }}')">{{ result[2] }}</a></td>
                                 <td style="white-space: nowrap;">{{ result[3] }}</td>
                                 <td style="white-space: nowrap;">{{ result[4] }}</td>
                                 <td style="white-space: nowrap;">{{ result[5] }}</td>
@@ -35,7 +35,7 @@
                                 <td style="white-space: nowrap;">{{ result[7] }}</td>
                                 <td style="white-space: nowrap;">{{ result[8] }}</td>
                                 <td style="white-space: nowrap;">{{ result[9] }}</td>
-                                <td style="white-space: nowrap;">{{ result[10]}}</td>
+                                <td style="white-space: nowrap; color: rgb(170, 147, 43);"><a style="color: rgb(170, 147, 43);" href="#" onclick="showImage('{{ result[10] }}')">See Book Cover</a></td>
                             </tr>
                         {% endfor %}
                     </tbody>
@@ -45,4 +45,29 @@
         <p style="color: red;">{{ error_message }}</p>
     </form>
 </div>
+
+<div id="lightbox" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.5); z-index: 9999; display: flex; justify-content: center; align-items: center;">
+    <img id="lightbox-image" src="" alt="Book Cover" style="width:100%; max-width: 300px; border-radius: 5px; cursor: pointer; transition: 0.3s;" onclick="hideImage()"/>
+</div>
+
+<script>
+    function show(content) {
+        alert(content);
+    }
+
+    function showImage(imagePath) {
+        if (imagePath !== "") {
+            var lightbox = document.getElementById("lightbox");
+            var lightboxImage = document.getElementById("lightbox-image");
+            lightboxImage.src = imagePath;
+            lightbox.style.display = "flex";
+        }
+    }
+
+    function hideImage() {
+        var lightbox = document.getElementById("lightbox");
+        
+        lightbox.style.display = "none";
+    }
+</script>
 {% endblock %}
