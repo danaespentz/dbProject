@@ -1,8 +1,7 @@
 {% extends "user_layout.html" %}
 
+<form action="{{ url_for('my_issues') }}" method="post" style="overflow-y: scroll;">
 {% block body %}
-<br></br><br></br>
-    <form action="{{ url_for('my_issues') }}" method="post">
         {% if user_borrowings %}
         <div style="max-width: 1000px; margin: auto; background-color: #f5f5f5; padding: 20px; border-radius: 10px; height: 250px; overflow-y: scroll;">
                 <h5>My Borrowings</h5>
@@ -22,7 +21,7 @@
                                 <td style="white-space: nowrap;">{{ issue[4] }}</td>
                                 <td style="white-space: nowrap;">{{ issue[3] }}</td>
                                 <td style="white-space: nowrap;">{{ issue[5] }}</td>
-                                {% if role == "School Admin" %}
+                                {% if role == "School Admin" or role == "Admin" %}
                                 <td style="white-space: nowrap;"><a href="{{ url_for('cancel_issue', issue_id=issue[0]) }}">Returned</td>
                                 {% endif %}
                             </tr>
@@ -62,6 +61,7 @@
                 </table>
         </div>
         {% endif %}
+         <br></br>
         {% if rating_approvals %}
         <div style="max-width: 1000px; margin: auto; background-color: #f5f5f5; padding: 20px; border-radius: 10px; height: 100px; overflow-y: scroll;">
                 <h5>Rating Approvals</h5>
@@ -92,5 +92,5 @@
         </div>
         {% endif %}
         <p style="color:green;">{{ message }}</p>
-    </form>
 {% endblock %}
+</form>

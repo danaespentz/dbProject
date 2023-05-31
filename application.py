@@ -603,7 +603,7 @@ def book_operations():
         if book[0]:
             with sqlite3.connect('database.db') as conn:
                 cursor = conn.cursor()
-                cursor.execute("SELECT * FROM ratings WHERE book_id = ?", (book[0],))
+                cursor.execute("SELECT * FROM ratings WHERE book_id = ? AND mode=1", (book[0],))
             reviews = cursor.fetchall()  
         return render_template('book_operations.html', user_name=user_name, role = session['user'][6], reviews=reviews)
     else:

@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS schools (
     telephone INTEGER NOT NULL,
     email TEXT NOT NULL,
     principal_name TEXT NOT NULL,
+    operator_name TEXT NOT NULL,
     admin_id TEXT NOT NULL
 );
 
