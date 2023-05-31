@@ -17,6 +17,11 @@ with open('SQL/insert_data.sql', 'r') as file:
     cursor.executescript(insert_data_query)
     connection.commit()
 
+with open('SQL/create_indexes.sql', 'r') as file:
+    indexes_query = file.read()
+    cursor.executescript(indexes_query)
+    connection.commit()
+
 # Insert the generated books into the database
 school_ids = ['12345', '23456', '34567', '45678', '67890', '01234']
 for school_id in school_ids:

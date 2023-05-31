@@ -3,7 +3,7 @@
   INSERT INTO schools (school_id, school_name, postcode, town, telephone, email, principal_name, admin_id) VALUES (34567, 'Arsakeion', '16675', 'Athens', 2103456789, 'info@arsakeion.gr', 'Mike Johnson', 12375);
   INSERT INTO schools (school_id, school_name, postcode, town, telephone, email, principal_name, admin_id) VALUES (45678, 'Geitonas School', '16676', 'Athens', 2104567890, 'info@geitonas.gr', 'Sarah Wilson', 12385);
   INSERT INTO schools (school_id, school_name, postcode, town, telephone, email, principal_name, admin_id) VALUES (67890, 'St. Lawrence College', '16678', 'Athens', 2106789012, 'info@stlawrence.gr', 'Emily Davis', 12344);
-  INSERT INTO schools (school_id, school_name, postcode, town, telephone, email, principal_name, admin_id) VALUES (01234, 'ACS Athens', '16682', 'Athens', 2100123456, 'info@acsathens.gr', 'Sophie Smith', 82345);
+  INSERT INTO schools (school_id, school_name, postcode, town, telephone, email, principal_name, admin_id) VALUES (01234, '6th High School Kalitheas', '16682', 'Athens', 2100123456, 'info@acsathens.gr', 'Sophie Smith', 82345);
   INSERT INTO users (user_id, user_name, user_password, name, age, school_id, role, approved) VALUES (11111, 'admin', 'admin', 'Admin', 21, 00000, 'Admin', 1);
   INSERT INTO users (user_id, user_name, user_password, name, age, school_id, role, approved) VALUES (12445, 'john123', 'password123', 'John Smith', 15, 12345, 'student', 1);
   INSERT INTO users (user_id, user_name, user_password, name, age, school_id, role, approved) VALUES (23455, 'jane456', 'pass456', 'Jane Doe', 17, 12345, 'student', 1);

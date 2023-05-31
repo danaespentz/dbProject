@@ -3,6 +3,7 @@ from datetime import date, timedelta, timezone
 from flask import Flask, session, render_template, request, redirect, url_for, jsonify, flash
 from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
+from werkzeug.utils import secure_filename
 from myfaker import books, book_categories, author_names, abstracts
 import sqlite3, re, shutil
 
@@ -184,7 +185,7 @@ def reload_issues(school_id, user_id, role):
 def new_book():
     if request.method == 'GET':
         user_name = session['user_name']
-        return render_template('new_book.html', user_name=user_name, role = session['user'][6])
+        return render_template('new_book.html', user_name=user_name, role=session['user'][6])
     else:
         user_name = session['user_name']
         isbn = request.form.get("isbn")
@@ -196,21 +197,25 @@ def new_book():
         theme_categories = request.form.get("theme_categories")
         language = request.form.get("language")
         keywords = request.form.get("keywords")
-        cover_page = request.form.get("cover_page")
+        cover_page = request.files['cover_page']
         abstract = request.form.get("abstract")
         school_id = request.form.get("school_id")
-        
+
         if not title or not isbn or not authors or not publisher or not pages or not copies or not theme_categories or not language or not keywords or not cover_page or not school_id:
-            return render_template('new_book.html', error_message="All fields are required !")
+            return render_template('new_book.html', error_message=cover_page)
+
+        filename = secure_filename(cover_page.filename)
+        file_path = os.path.join('static/book_covers/', filename)
+        cover_page.save(file_path)
 
         with sqlite3.connect('database.db') as conn:
             cursor = conn.cursor()
             cursor.execute(
                 "INSERT INTO books (isbn, title, authors, publisher, pages, copies, theme_categories, language, keywords, cover_page, abstract, school_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                (isbn, title, authors, publisher, pages, copies, theme_categories, language, keywords, cover_page, abstract, school_id)
+                (isbn, title, authors, publisher, pages, copies, theme_categories, language, keywords, file_path, abstract, school_id)
             )
-        flash(f"Your book was added successfully!", 'success')
-        return render_template('new_book.html', user_name=user_name, role = session['user'][6])
+        flash("Your book was added successfully!", 'success')
+        return render_template('new_book.html', user_name=user_name, role=session['user'][6])
 
 @app.route('/<user_name>/home', methods=['GET', 'POST'])
 def home(user_name):
@@ -274,17 +279,15 @@ def home(user_name):
                     cursor = conn.cursor()
                     cursor.execute("SELECT * FROM books WHERE copies=? AND school_id=?", (copies,session['user'][5],))
             results = cursor.fetchall()
-        session['results'] = results
-        return redirect(url_for('search_results'))
+        if not results:
+            return render_template('search_results.html', user_name=user_name, role = session['user'][6], error_message="Not found.. Sorry")
+        else:
+            return render_template('search_results.html', user_name=user_name, role = session['user'][6], results=results)
 
 @app.route('/search_results', methods=['GET', 'POST'])
 def search_results():
     user_name = session['user_name']
-    results = session.get('results', [])
-    if not results:
-        return render_template('search_results.html', user_name=user_name, role = session['user'][6], error_message="Not found.. Sorry")
-    else:
-        return render_template('search_results.html', user_name=user_name, role = session['user'][6], results=results)
+    return render_template('search_results.html', user_name=user_name, role = session['user'][6])
 
 @app.route('/lateBorrowings', methods=['GET', 'POST'])
 def lateBorrowings():

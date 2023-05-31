@@ -2,9 +2,8 @@
 
 {% block body %}
 <br></br><br></br>
-<div style="max-width: 800px; margin: auto; background-color: #f5f5f5; padding: 20px; border-radius: 10px;">
     <form action="{{ url_for('my_issues') }}" method="post">
-        <div style="height: 450px; overflow-y: scroll;">
+        <div style="max-width: 1000px; margin: auto; background-color: #f5f5f5; padding: 20px; border-radius: 10px; height: 250px; overflow-y: scroll;">
         {% if user_borrowings %}
                 <h5>My Borrowings</h5>
                 <table class="table table-striped">
@@ -33,6 +32,9 @@
         {% else %}
             <h5>No Borrowings</h5>
         {% endif %}
+        </div>
+        <br></br>
+        <div style="max-width: 1000px; margin: auto; background-color: #f5f5f5; padding: 20px; border-radius: 10px; height: 250px; overflow-y: scroll;">
         {% if user_reservations %}
                 <h5>My Reservations</h5>
                 <table class="table table-striped">
@@ -63,7 +65,9 @@
         {% else %}
             <h5>No Reservations</h5>
         {% endif %}
+        </div>
         {% if rating_approvals %}
+        <div style="max-width: 1000px; margin: auto; background-color: #f5f5f5; padding: 20px; border-radius: 10px; height: 100px; overflow-y: scroll;">
                 <h5>Rating Approvals</h5>
                 <table class="table table-striped">
                     <thead>
@@ -93,5 +97,4 @@
         <p style="color:green;">{{ message }}</p>
         </div>
     </form>
-</div>
 {% endblock %}
