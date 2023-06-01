@@ -35,7 +35,7 @@
                                 <td style="white-space: nowrap;">{{ result[7] }}</td>
                                 <td style="white-space: nowrap;">{{ result[8] }}</td>
                                 <td style="white-space: nowrap;">{{ result[9] }}</td>
-                                <td style="white-space: nowrap; color: rgb(170, 147, 43);"><a style="color: rgb(170, 147, 43);" href="#" onclick="showImage('{{ result[10] }}')">See Book Cover</a></td>
+                                <td style="white-space: nowrap; color: rgb(170, 147, 43);"><a style="color: rgb(170, 147, 43);" href="#" onclick="showImage('/{{ result[10] }}')">See Book Cover</a></td>
                             </tr>
                         {% endfor %}
                     </tbody>
@@ -47,7 +47,9 @@
 </div>
 
 <div id="lightbox" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.5); z-index: 9999; display: flex; justify-content: center; align-items: center;">
-    <img id="lightbox-image" src="" alt="Book Cover" style="width:100%; max-width: 300px; border-radius: 5px; cursor: pointer; transition: 0.3s;" onclick="hideImage()"/>
+    <div id="lightbox-content" style="max-width: 400px; max-height: 600px;">
+        <img id="lightbox-image" src="" alt="Book Cover" style="width:100%; max-width: 100%; max-height: 100%; border-radius: 5px; cursor: pointer; transition: 0.3s;" onclick="hideImage()"/>
+    </div>
 </div>
 
 <script>
@@ -56,12 +58,10 @@
     }
 
     function showImage(imagePath) {        
-        if (imagePath !== "") {
-            var lightbox = document.getElementById("lightbox");
-            var lightboxImage = document.getElementById("lightbox-image");
-            lightboxImage.src = imagePath;
-            lightbox.style.display = "flex";
-        }
+        var lightbox = document.getElementById("lightbox");
+        var lightboxImage = document.getElementById("lightbox-image");
+        lightboxImage.src = imagePath;
+        lightbox.style.display = "flex";
     }
 
     function hideImage() {
