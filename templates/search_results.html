@@ -55,7 +55,7 @@
         alert(content);
     }
 
-    function showImage(imagePath) {
+    function showImage(imagePath) {        
         if (imagePath !== "") {
             var lightbox = document.getElementById("lightbox");
             var lightboxImage = document.getElementById("lightbox-image");
@@ -66,8 +66,8 @@
 
     function hideImage() {
         var lightbox = document.getElementById("lightbox");
-        
         lightbox.style.display = "none";
     }
 </script>
+
 {% endblock %}

@@ -8,7 +8,12 @@
             <h5 style="margin-right: auto;">Looking for a book?</h5>
             {% if role == "School Admin" or role == "Admin" %}
             <div class="btn-group">
-                <a href="{{ url_for('new_book') }}" class="btn btn-primary">New Book</a>
+                <a href="{{ url_for('new_book') }}" class="btn btn-primary mr-2">New Book</a>
+            </div>
+            {% endif %}
+            {% if role == "Admin" %}
+            <div class="btn-group">
+                <a href="{{ url_for('new_school') }}" class="btn btn-primary mr-2">New School</a>
             </div>
             {% endif %}
         </div>

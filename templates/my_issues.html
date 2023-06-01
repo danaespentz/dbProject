@@ -1,9 +1,21 @@
 {% extends "user_layout.html" %}
 
-<form action="{{ url_for('my_issues') }}" method="post" style="overflow-y: scroll;">
 {% block body %}
+<form action="{{ url_for('my_issues') }}" method="post" style="overflow-y: scroll;">
+    <br></br>
+    <div class="btn-group">
+        <a href="{{ url_for('my_issues', loans=1) }}" style="display: inline-block; width: 100px; height: 100px; border-radius: 50%; background-color: rgb(167, 123, 42); color: white; font-size: 16px; font-weight: bold; text-align: center; line-height: 100px; text-decoration: none; margin-right: 10px;">Loans</a>
+    </div>
+    <div class="btn-group">
+        <a href="{{ url_for('my_issues', reservations=1) }}" style="display: inline-block; width: 100px; height: 100px; border-radius: 50%; background-color: rgb(115, 177, 91); color: white; font-size: 16px; font-weight: bold; text-align: center; line-height: 100px; text-decoration: none; margin-right: 10px;">Reserve</a>
+    </div>
+    <div class="btn-group">
+        <a href="{{ url_for('my_issues', approvals=1) }}" style="display: inline-block; width: 100px; height: 100px; border-radius: 50%; background-color: #FF6384; color: white; font-size: 16px; font-weight: bold; text-align: center; line-height: 100px; text-decoration: none; margin-right: 10px;">NewRatings</a>
+    </div>
+    {% if loans %}
         {% if user_borrowings %}
-        <div style="max-width: 1000px; margin: auto; background-color: #f5f5f5; padding: 20px; border-radius: 10px; height: 250px; overflow-y: scroll;">
+        <br></br><br></br>
+        <div style="max-width: 1000px; margin: auto; background-color: #f5f5f5; padding: 20px; border-radius: 10px; height: 300px; overflow-y: scroll;">
                 <h5>My Borrowings</h5>
                 <table class="table table-striped">
                     <thead>
@@ -22,7 +34,7 @@
                                 <td style="white-space: nowrap;">{{ issue[3] }}</td>
                                 <td style="white-space: nowrap;">{{ issue[5] }}</td>
                                 {% if role == "School Admin" or role == "Admin" %}
-                                <td style="white-space: nowrap;"><a href="{{ url_for('cancel_issue', issue_id=issue[0]) }}">Returned</td>
+                                <td style="white-space: nowrap;"><a style="color:rgb(116, 81, 17);" href="{{ url_for('cancel_issue', issue_id=issue[0]) }}">Returned</td>
                                 {% endif %}
                             </tr>
                         {% endfor %}
@@ -30,9 +42,11 @@
                 </table>
         </div>
         {% endif %}
-        <br></br>
+    {% endif %}
+    {% if reservations %}
         {% if user_reservations %}
-        <div style="max-width: 1000px; margin: auto; background-color: #f5f5f5; padding: 20px; border-radius: 10px; height: 250px; overflow-y: scroll;">
+        <br></br><br></br>
+        <div style="max-width: 1000px; margin: auto; background-color: #f5f5f5; padding: 20px; border-radius: 10px; height: 300px; overflow-y: scroll;">
                 <h5>My Reservations</h5>
                 <table class="table table-striped">
                     <thead>
@@ -51,9 +65,9 @@
                                 <td style="white-space: nowrap;">{{ issue[4] }}</td>
                                 <td style="white-space: nowrap;">{{ issue[3] }}</td>
                                 <td style="white-space: nowrap;">{{ issue[5] }}</td>
-                                <td style="white-space: nowrap;"><a href="{{ url_for('cancel_issue', issue_id=issue[0]) }}">Cancel</td>
+                                <td style="white-space: nowrap;"><a style="color:rgb(180, 158, 59);" href="{{ url_for('cancel_issue', issue_id=issue[0]) }}">Cancel</td>
                                 {% if role == "School Admin" or role == "Admin" %}
-                                <td style="white-space: nowrap;"><a href="{{ url_for('borrowed_issue', issue_id=issue[0]) }}">Borrowed</td>
+                                <td style="white-space: nowrap;"><a style="color:rgb(124, 88, 21);" href="{{ url_for('borrowed_issue', issue_id=issue[0]) }}">Borrowed</td>
                                 {% endif %}
                             </tr>
                         {% endfor %}
@@ -61,9 +75,11 @@
                 </table>
         </div>
         {% endif %}
-         <br></br>
+    {% endif %}
+    {% if approvals %}
         {% if rating_approvals %}
-        <div style="max-width: 1000px; margin: auto; background-color: #f5f5f5; padding: 20px; border-radius: 10px; height: 100px; overflow-y: scroll;">
+        <br></br><br></br>
+        <div style="max-width: 1000px; margin: auto; background-color: #f5f5f5; padding: 20px; border-radius: 10px; height: 300px; overflow-y: scroll;">
                 <h5>Rating Approvals</h5>
                 <table class="table table-striped">
                     <thead>
@@ -84,13 +100,13 @@
                                 <td style="white-space: nowrap;">{{ issue[3] }}</td>
                                 <td style="white-space: nowrap; color:rgb(20, 146, 146);">{{ issue[4] }} to 5</td>
                                 <td style="white-space: nowrap;">{{ issue[5] }}</td>
-                                <td style="white-space: nowrap;"><a href="{{ url_for('my_issues', rating_id=issue[0]) }}">Approve</td>
+                                <td style="white-space: nowrap;"><a style="color:rgb(116, 81, 17);" href="{{ url_for('my_issues', rating_id=issue[0]) }}">Approve</td>
                             </tr>
                         {% endfor %}
                     </tbody>
                 </table>
         </div>
         {% endif %}
+    {% endif %}
         <p style="color:green;">{{ message }}</p>
 {% endblock %}
-</form>

@@ -180,6 +180,23 @@ def reload_issues(school_id, user_id, role):
                     if days > 0:
                         bad_users.append(user[0])
         session['bad_users'] = bad_users
+    else:
+        bad_users = []
+        with sqlite3.connect('database.db') as conn:
+            cursor = conn.cursor()
+            user = cursor.execute("SELECT * FROM users WHERE user_id = ?", (user_id,)).fetchone()
+        with sqlite3.connect('database.db') as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM reports WHERE user_id = ? AND issue = 'borrowed'", (user_id,))
+        search = cursor.fetchall()    
+        if search:
+            for result in search:
+                issue_date = datetime.datetime.strptime(result[5], '%Y-%m-%d').date()
+                days = (today - issue_date).days
+                if days > 0:
+                    bad_users.append(user_id)
+                    break
+        session['bad_users'] = bad_users
 
 @app.route('/new_books', methods=['GET', 'POST'])
 def new_book():
@@ -216,6 +233,31 @@ def new_book():
             )
         flash("Your book was added successfully!", 'success')
         return render_template('new_book.html', user_name=user_name, role=session['user'][6])
+
+@app.route('/new_school', methods=['GET', 'POST'])
+def new_school():
+    if request.method == 'GET':
+        user_name = session['user_name']
+        return render_template('new_school.html', user_name=user_name, role=session['user'][6])
+    else:
+        user_name = session['user_name']
+        school_id = random.randrange(10000, 99999)
+        school_name = request.form.get("school_name")
+        postcode = request.form.get("postcode")
+        town = request.form.get("town")
+        telephone = request.form.get("telephone")
+        email = request.form.get("email")
+        principal_name = request.form.get("principal_name")
+        operator_name = request.form.get("operator_name")
+        admin_id = random.randrange(10000, 99999)
+
+        with sqlite3.connect('database.db') as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "INSERT INTO schools (school_id, school_name, postcode, town, telephone, email, principal_name, operator_name, admin_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                (school_id, school_name, postcode, town, telephone, email, principal_name, operator_name, admin_id)
+            )
+        return render_template('new_school.html', user_name=user_name, role=session['user'][6])
 
 @app.route('/<user_name>/home', methods=['GET', 'POST'])
 def home(user_name):
@@ -462,48 +504,65 @@ def ratings():
 @app.route('/my_issues',methods=['GET', 'POST'])
 def my_issues():
     user_name = session['user_name']
+    loans = request.args.get('loans')
+    reservations = request.args.get('reservations')
+    approvals = request.args.get('approvals')
+
+    if loans:
+        if session['user'][6] == "Admin":
+            with sqlite3.connect('database.db') as conn:
+                cursor = conn.cursor()
+                user_borrowings = cursor.execute("SELECT * FROM reports WHERE issue='borrowed'").fetchall()
+            return render_template('my_issues.html', user_name=user_name, role = session['user'][6], loans=loans, user_borrowings=user_borrowings)   
+        if session['user'][6] == "School Admin":
+            with sqlite3.connect('database.db') as conn:
+                cursor = conn.cursor()
+                user_borrowings = cursor.execute("SELECT * FROM reports WHERE issue='borrowed' AND school_id = ?",(str(session['user'][5]),)).fetchall()
+            return render_template('my_issues.html', user_name=user_name, role = session['user'][6], loans=loans, user_borrowings=user_borrowings)   
+        else:
+            with sqlite3.connect('database.db') as conn:
+                cursor = conn.cursor()
+                user_borrowings = cursor.execute("SELECT * FROM reports WHERE user_id=? AND issue='borrowed'", (session['user'][0],)).fetchall()
+            return render_template('my_issues.html', user_name=user_name, role = session['user'][6], loans=loans, user_borrowings=user_borrowings)   
+    if reservations:
+        if session['user'][6] == "Admin":
+            with sqlite3.connect('database.db') as conn:
+                cursor = conn.cursor()
+                user_reservations = cursor.execute("SELECT * FROM reports WHERE issue='reserved'").fetchall()
+            return render_template('my_issues.html', user_name=user_name, role = session['user'][6], reservations=reservations, user_reservations=user_reservations)   
+        if session['user'][6] == "School Admin":
+            with sqlite3.connect('database.db') as conn:
+                cursor = conn.cursor()
+                user_reservations = cursor.execute("SELECT * FROM reports WHERE issue='reserved' AND school_id = ?",(str(session['user'][5]),)).fetchall()
+            return render_template('my_issues.html', user_name=user_name, role = session['user'][6], reservations=reservations, user_reservations=user_reservations)   
+        else:
+            with sqlite3.connect('database.db') as conn:
+                cursor = conn.cursor()
+                user_reservations = cursor.execute("SELECT * FROM reports WHERE user_id=? AND issue='reserved'", (session['user'][0],)).fetchall()
+            return render_template('my_issues.html', user_name=user_name, role = session['user'][6], reservations=reservations, user_reservations=user_reservations)   
     if session['user'][6] == "Admin":
-        with sqlite3.connect('database.db') as conn:
-            cursor = conn.cursor()
-            user_borrowings = cursor.execute("SELECT * FROM reports WHERE issue='borrowed'").fetchall()
-        with sqlite3.connect('database.db') as conn:
-            cursor = conn.cursor()
-            user_reservations = cursor.execute("SELECT * FROM reports WHERE issue='reserved'").fetchall()
-        
         rating_id = request.args.get('rating_id')
         if rating_id:
             with sqlite3.connect('database.db') as conn:
                 cursor = conn.cursor()
                 cursor.execute("UPDATE ratings SET mode=1 WHERE rating_id=?", (rating_id,))
-        with sqlite3.connect('database.db') as conn:
-            cursor = conn.cursor()
-            rating_approvals = cursor.execute("SELECT * FROM ratings R INNER JOIN users U ON R.user_id = U.user_id WHERE R.mode=0").fetchall()
-        return render_template('my_issues.html', user_name=user_name, role = session['user'][6], user_reservations=user_reservations, user_borrowings=user_borrowings, rating_approvals=rating_approvals)   
+        if approvals:
+            with sqlite3.connect('database.db') as conn:
+                cursor = conn.cursor()
+                rating_approvals = cursor.execute("SELECT * FROM ratings R INNER JOIN users U ON R.user_id = U.user_id WHERE R.mode=0").fetchall()
+            return render_template('my_issues.html', user_name=user_name, role = session['user'][6], approvals=approvals, rating_approvals=rating_approvals)   
     if session['user'][6] == "School Admin":
-        with sqlite3.connect('database.db') as conn:
-            cursor = conn.cursor()
-            user_borrowings = cursor.execute("SELECT * FROM reports WHERE issue='borrowed' AND school_id = ?",(str(session['user'][5]),)).fetchall()
-        with sqlite3.connect('database.db') as conn:
-            cursor = conn.cursor()
-            user_reservations = cursor.execute("SELECT * FROM reports WHERE issue='reserved' AND school_id = ?",(str(session['user'][5]),)).fetchall()
-        
         rating_id = request.args.get('rating_id')
         if rating_id:
             with sqlite3.connect('database.db') as conn:
                 cursor = conn.cursor()
                 cursor.execute("UPDATE ratings SET mode=1 WHERE rating_id=?", (rating_id,))
-        with sqlite3.connect('database.db') as conn:
-            cursor = conn.cursor()
-            rating_approvals = cursor.execute("SELECT * FROM ratings R INNER JOIN users U ON R.user_id = U.user_id WHERE U.school_id = ? AND R.mode=0",(str(session['user'][5]),)).fetchall()
-        return render_template('my_issues.html', user_name=user_name, role = session['user'][6], user_reservations=user_reservations, user_borrowings=user_borrowings, rating_approvals=rating_approvals)
-    else:
-        with sqlite3.connect('database.db') as conn:
-            cursor = conn.cursor()
-            user_borrowings = cursor.execute("SELECT * FROM reports WHERE user_id=? AND issue='borrowed'", (session['user'][0],)).fetchall()
-        with sqlite3.connect('database.db') as conn:
-            cursor = conn.cursor()
-            user_reservations = cursor.execute("SELECT * FROM reports WHERE user_id=? AND issue='reserved'", (session['user'][0],)).fetchall()
-        return render_template('my_issues.html', user_name=user_name, role = session['user'][6], user_reservations=user_reservations, user_borrowings=user_borrowings)
+        if approvals:
+            with sqlite3.connect('database.db') as conn:
+                cursor = conn.cursor()
+                rating_approvals = cursor.execute("SELECT * FROM ratings R INNER JOIN users U ON R.user_id = U.user_id WHERE U.school_id = ? AND R.mode=0",(str(session['user'][5]),)).fetchall()
+            return render_template('my_issues.html', user_name=user_name, role = session['user'][6], approvals=approvals, rating_approvals=rating_approvals)   
+    return render_template('my_issues.html', user_name=user_name, role = session['user'][6])   
 
 @app.route('/cancel_issue', methods=['GET', 'POST'])
 def cancel_issue():
@@ -515,11 +574,10 @@ def cancel_issue():
             report = cursor.execute("SELECT * FROM reports WHERE report_id=?", (report_id,)).fetchone()
         if report[6] == "borrowed":
             book_id = report[2]
-            update_query = """UPDATE books SET copies = copies + 1 WHERE book_id = ? AND school_id=?"""
+            update_query = "UPDATE books SET copies = copies + 1 WHERE book_id = ? AND school_id=?"
             with sqlite3.connect('database.db') as conn:
                 cursor = conn.cursor()
                 cursor.execute(update_query, (book_id,session['user'][5],))
-        
         with sqlite3.connect('database.db') as conn:
             cursor = conn.cursor()
             issue = "returned"
@@ -533,13 +591,13 @@ def borrowed_issue():
     if report_id:
         with sqlite3.connect('database.db') as conn:
             cursor = conn.cursor()
-            report = cursor.execute("SELECT * FROM reports WHERE report_id=?", (report_id,)).fetchone()
+            book_id = cursor.execute("SELECT book_id FROM reports WHERE report_id=?", (report_id,)).fetchone()
         with sqlite3.connect('database.db') as conn:
             cursor = conn.cursor()
             cursor.execute("UPDATE reports SET issue = ? WHERE report_id = ?", ("borrowed", report_id,))
         with sqlite3.connect('database.db') as conn:
             cursor = conn.cursor()
-            cursor.execute("UPDATE books SET copies = copies - 1 WHERE book_id = ? AND school_id=?", (report[2],session['user'][5],))
+            cursor.execute("UPDATE books SET copies = copies - 1 WHERE book_id =?", (book_id[0],))
     return redirect(url_for('my_issues'))
 
 def new_borrowing(book_id, title, student_id, start_of_week, end_of_week, copies):
@@ -551,11 +609,12 @@ def new_borrowing(book_id, title, student_id, start_of_week, end_of_week, copies
     if search:
         message="Before you borrow another copy of this book you have to return yours"
         return message
-    reports_this_week_query = "SELECT * FROM reports WHERE user_id=? AND date>=? AND date<=?"
+    
+    loans_this_week_query = "SELECT * FROM reports WHERE user_id=? AND issue=? AND date>=? AND date<=?"
     with sqlite3.connect('database.db') as conn:
         cursor = conn.cursor()
-        cursor.execute(reports_this_week_query, (student_id, start_of_week, end_of_week,))
-    reports_this_week = cursor.fetchall()
+        cursor.execute(loans_this_week_query, (student_id, "borrowed", start_of_week, end_of_week,))
+    loans_this_week = cursor.fetchall()
     
     with sqlite3.connect('database.db') as conn:
         cursor = conn.cursor()
@@ -563,11 +622,14 @@ def new_borrowing(book_id, title, student_id, start_of_week, end_of_week, copies
     user = cursor.fetchone()
     role = user[6]
     school_id = user[5]
-    num_books_this_week = sum(1 for r in reports_this_week)
+    
+    num_books_this_week = sum(1 for r in loans_this_week)
     if role == 'student' and num_books_this_week >= 2:
-        return render_template('book_operations.html', user_name=user_name, role = session['user'][6], message="You have already borrowed 2 books this week!")
+        flash(f"{user[3]} has already borrowed 2 books this week", 'success')        
+        return
     elif role == 'professor' and num_books_this_week >= 1:
-        return render_template('book_operations.html', user_name=user_name, role = session['user'][6], message="You have already borrowed 1 book this week!")
+        flash(f"{user[3]} has already borrowed 1 book this week", 'success')        
+        return
     if copies == 0:
         issue="onhold"
         message="There are no copies of this book left .. Your are in the waiting list!"
@@ -626,6 +688,9 @@ def book_operations():
             today = date.today()
             if date < today:
                 return render_template('book_operations.html', user_name=user_name, role = session['user'][6], message="Invalid Date.")  
+            bad_users = session['bad_users']
+            if int(user_id) in bad_users:
+                return render_template('book_operations.html', user_name=user_name, role = session['user'][6], message="Reservation Criteria Not Met: we kindly remind you that there are overdue books that need to be returned promptly.")  
         else:
             today = datetime.date.today()
         start_of_week = today - timedelta(days=today.weekday())
@@ -683,13 +748,13 @@ def book_operations():
                 return render_template('book_operations.html', user_name=user_name, role = session['user'][6], message="Before you reserve this book you have to return the book you borrowed. ")
 
             # Fetch the reports within the current week for the specified user
-            reports_this_week_query = "SELECT * FROM reports WHERE user_id=? AND date>=? AND date<=?"
+            reservations_this_week_query = "SELECT * FROM reports WHERE user_id=? AND issue=? AND date>=? AND date<=?"
             with sqlite3.connect('database.db') as conn:
                 cursor = conn.cursor()
-                cursor.execute(reports_this_week_query, (user_id, start_of_week, end_of_week))
-            reports_this_week = cursor.fetchall()
+                cursor.execute(reservations_this_week_query, (user_id, "reserved", start_of_week, end_of_week))
+            reservations_this_week = cursor.fetchall()
             
-            num_books_this_week = sum(1 for r in reports_this_week)
+            num_books_this_week = sum(1 for r in reservations_this_week)
             # Check if the user has exceeded the borrowing limit for this week
             if role == 'student' and num_books_this_week >= 2:
                 return render_template('book_operations.html', user_name=user_name, role = session['user'][6], message="You have already reserved 2 books this week!")
