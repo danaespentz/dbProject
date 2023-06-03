@@ -40,7 +40,7 @@ Listed alphabetically:
 
 ### Run the following commands to create all sql queries inside the DMBS and run the application(at this spesific order !).
 
-3. [createdb.py](createbd.py) to create the database and the tables.
+3. [createdb.py](createdb.py) to create the database and the tables.
 4. [application.py](application.py) to run the application. 
 
 
@@ -49,4 +49,4 @@ Listed alphabetically:
 ## SQL Queries
 
 Here we show all the [Queries](SQL/) used in the site at each page.
-Find the questions for the queries attached to the file [Εκφωνήσεις](Docs/Εκφώνηση.pdf)
+Find the questions for the queries attached to the file [Assignment](Docs/assignment)
