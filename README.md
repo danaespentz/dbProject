@@ -37,7 +37,7 @@ Listed alphabetically:
 	$ ./requirements
 ```
 
-### Run the following files to create all sql queries and run the application(at this spesific order !).
+### Run the following files to create all sql queries and run the app (at this spesific order !).
 
 - [createdb.py](createdb.py) to create the database and the tables.
 - [application.py](application.py) to run the application. 
