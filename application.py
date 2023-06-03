@@ -1,11 +1,8 @@
-import os, datetime, random
-from datetime import date, timedelta, timezone
-from flask import Flask, session, render_template, request, redirect, url_for, jsonify, flash
-from flask_session import Session
-from flask_sqlalchemy import SQLAlchemy
+import sqlite3, re, shutil, os, random
+from datetime import date, timedelta
+from flask import Flask, session, render_template, request, redirect, url_for, flash
 from werkzeug.utils import secure_filename
 from myfaker import books, book_categories, author_names, abstracts
-import sqlite3, re, shutil
 
 # Connect to the database or create it if it doesn't exist
 conn = sqlite3.connect('database.db')
@@ -151,7 +148,7 @@ def reload_issues(school_id, user_id, role):
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM reports WHERE issue=? AND user_id=?", ("reserved",user_id,))
     reports=cursor.fetchall()
-    for report in reports:
+    for report in reports:        
         reserved_date = datetime.datetime.strptime(report[5], "%Y-%m-%d").date()
         today = datetime.date.today()
         days = (today - reserved_date).days
@@ -574,14 +571,13 @@ def cancel_issue():
             report = cursor.execute("SELECT * FROM reports WHERE report_id=?", (report_id,)).fetchone()
         if report[6] == "borrowed":
             book_id = report[2]
-            update_query = "UPDATE books SET copies = copies + 1 WHERE book_id = ? AND school_id=?"
+            update_query = "UPDATE books SET copies = copies + 1 WHERE book_id = ?"
             with sqlite3.connect('database.db') as conn:
                 cursor = conn.cursor()
-                cursor.execute(update_query, (book_id,session['user'][5],))
+                cursor.execute(update_query, (book_id,))
         with sqlite3.connect('database.db') as conn:
             cursor = conn.cursor()
-            issue = "returned"
-            cursor.execute("UPDATE reports SET issue = ? WHERE report_id = ?", (issue, report_id,))
+            cursor.execute("UPDATE reports SET issue = ? WHERE report_id = ?", ("returned", report_id,))
     return redirect(url_for('my_issues'))
 
 @app.route('/borrowed_issue', methods=['GET', 'POST'])
@@ -638,7 +634,7 @@ def new_borrowing(book_id, title, student_id, start_of_week, end_of_week, copies
         update_query = "UPDATE books SET copies = copies - 1 WHERE book_id = ? AND school_id=?"
         with sqlite3.connect('database.db') as conn:
             cursor = conn.cursor()
-            cursor.execute(update_query, (book_id,session['user'][5],))
+            cursor.execute(update_query, (book_id,school_id,))
         message="The borrowing has been submitted successfully !"
     
     issue_date=date.today() + timedelta(days=14)
@@ -657,7 +653,7 @@ def book_operations():
         
         with sqlite3.connect('database.db') as conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM books WHERE isbn = ?", (isbn,))
+            cursor.execute("SELECT * FROM books WHERE isbn = ? AND school_id=?", (isbn, session['user'][5]))
         book = cursor.fetchone()  
         session['book_id'] = book[0]
         session['title'] = book[2]
