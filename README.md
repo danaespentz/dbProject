@@ -41,7 +41,7 @@ Listed alphabetically:
 
 	1. [createdb.py](createdb.py) to create the database and the tables.
 	2. [application.py](application.py) to run the application. 
-	3. Open your browser and type <http://127.0.0.1:5000/> to preview the website.
+	3. Open your browser and type 'http://127.0.0.1:5000/' to preview the website.
 
 
 ### SQL Queries
