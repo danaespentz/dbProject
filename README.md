@@ -37,12 +37,13 @@ Listed alphabetically:
 	$ ./requirements
 ```
 
-### Run the following commands to create all sql queries and run the application(at this spesific order !).
+### Run the following files to create all sql queries and run the application(at this spesific order !).
 
-	1. [createdb.py](createdb.py) to create the database and the tables.
-	2. [application.py](application.py) to run the application. 
-	3. Open your browser and type 'http://127.0.0.1:5000/' to preview the website.
+- [createdb.py](createdb.py) to create the database and the tables.
+- [application.py](application.py) to run the application. 
 
+
+Open your browser and type <http://127.0.0.1:5000/> to preview the website.
 
 ### SQL Queries
 
