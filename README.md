@@ -19,11 +19,11 @@ Listed alphabetically:
 
 ## ER-Diagram
 
-![](https://github.com/danaespentz/dbProject/static/ERdiagram.png?raw=true)
+![](https://github.com/danaespentz/dbProject/static/ERdiagram.jpg)
 
 ## Relational Model
 
-![](https://github.com/danaespentz/dbProject/static/relationalDiagram.png?raw=true)
+![](https://github.com/danaespentz/dbProject/static/relationalDiagram.jpg)
 
 ### Download the web-app 
 1. Run,
@@ -49,4 +49,4 @@ Listed alphabetically:
 ## SQL Queries
 
 Here we show all the [Queries](SQL/) used in the site at each page.
-Find the questions for the queries attached to the file [Assignment](Docs/assignment)
+Find the questions for the queries attached to the file [Assignment](Docs/assignment.pdf)
