@@ -10,7 +10,7 @@ Listed alphabetically:
 ## Tools used
 ![Python](https://img.shields.io/badge/python-v3.7+-red.svg)
 ![Dependencies](https://img.shields.io/badge/flask-v2.0.1-red)
-![sqlite3]
+![sqlite3](https://img.shields.io/badge/sqlite3-v3.19.3-yellow)
 
 ## [Requirements](https://github.com/danaespentz/dbProject/requirements)
 - sql server 2019
