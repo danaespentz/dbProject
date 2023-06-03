@@ -3,9 +3,9 @@ This is a project for the Databases class in NTUA Electrical and Computer Engine
 
 ## Contributors
 Listed alphabetically:
-1. Orestis Karkanis 
-1. Nektarios Mpoumpalos 
-1. Danae Spentzou 
+1. Orestis Karkanis ([orestiskarkanis](https://github.com/orestiskarkanis))
+1. Nektarios Mpoumpalos ([nektmpalos](https://github.com/nektmpalos))
+1. Danae Spentzou ([danaespentz](https://github.com/danaespentz))
 
 ## Tools used
 ![Python](https://img.shields.io/badge/python-v3.9.2+-red)
