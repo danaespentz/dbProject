@@ -3,9 +3,9 @@ This is a project for the Databases class in NTUA Electrical and Computer Engine
 
 ## Contributors
 Listed alphabetically:
-1. Orestis Karkanis 
-1. Nektarios Mpoumpalos 
-1. Danae Spentzou 
+1. Orestis Karkanis ([orestiskarkanis](https://github.com/orestiskarkanis))
+1. Nektarios Mpoumpalos ([nektmpalos](https://github.com/nektmpalos))
+1. Danae Spentzou ([danaespentz](https://github.com/danaespentz))
 
 ## Tools used
 ![Python](https://img.shields.io/badge/python-v3.9.2+-red)
@@ -37,12 +37,13 @@ Listed alphabetically:
 	$ ./requirements
 ```
 
-### Run the following commands to create all sql queries and run the application(at this spesific order !).
+### Run the following files to create all sql queries and run the app (at this spesific order !).
 
-	1. [createdb.py](createdb.py) to create the database and the tables.
-	2. [application.py](application.py) to run the application. 
-	3. Open your browser and type <http://127.0.0.1:5000/> to preview the website.
+- [createdb.py](createdb.py) to create the database and the tables.
+- [application.py](application.py) to run the application. 
 
+
+Open your browser and type <http://127.0.0.1:5000/> to preview the website.
 
 ### SQL Queries
 
