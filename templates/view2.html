@@ -23,17 +23,17 @@
                     </tr>
                 </thead>
                 <tbody>
-                    {% set max_len = view1|length if view1|length > view2|length else view2|length %}
+                    {% set max_len = view2|length if view2|length > view1|length else view1|length %}
                     {% for i in range(max_len) %}
                     <tr>
                         <td style="white-space: nowrap;">
-                            {% if i < view1|length %}
-                            {{ view1[i] }}
+                            {% if i < view2|length %}
+                            {{ view2[i] }}
                             {% endif %}
                         </td>
                         <td style="white-space: nowrap;">
-                            {% if i < view2|length %}
-                            {{ view2[i] }}
+                            {% if i < view1|length %}
+                            {{ view1[i] }}
                             {% endif %}
                         </td>
                     </tr>

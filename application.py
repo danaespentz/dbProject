@@ -1,4 +1,4 @@
-import sqlite3, re, shutil, os, random
+import sqlite3, re, shutil, os, random, datetime
 from datetime import date, timedelta
 from flask import Flask, session, render_template, request, redirect, url_for, flash
 from werkzeug.utils import secure_filename
@@ -924,7 +924,8 @@ def view2():
         
         name_list1 = [name[0] for name in results1]
         name_list2 = [name.strip() for name in results2[0][0].split(',') if name.strip()]
-        return render_template('view2.html', user_name=user_name, role=session['user'][6], category=category, view1=name_list1, view2=name_list2)
+        authors = set(name_list2)
+        return render_template('view2.html', user_name=user_name, role=session['user'][6], category=category, view1=name_list1, view2=list(authors))
     return render_template('view2.html', user_name=user_name, role=session['user'][6])
 
 @app.route('/view3', methods=['GET', 'POST'])
