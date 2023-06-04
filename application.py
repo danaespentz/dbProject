@@ -276,48 +276,52 @@ def home(user_name):
             if session['user'][0] == 11111:
                 with sqlite3.connect('database.db') as conn:
                     cursor = conn.cursor()
-                    cursor.execute("SELECT * FROM books WHERE title=?", (title,))
+                    cursor.execute("SELECT * FROM books WHERE title=? GROUP BY title", (title,))
+                results = cursor.fetchall()
             else:    
                 with sqlite3.connect('database.db') as conn:
                     cursor = conn.cursor()
-                    cursor.execute("SELECT * FROM books WHERE title=? AND school_id=?", (title,session['user'][5],))
-            results = cursor.fetchall()
+                    cursor.execute("SELECT * FROM books WHERE title=? AND school_id=? ", (title,session['user'][5],))
+                results = cursor.fetchall()
             if not results:
                 return render_template('home.html', user_name=user_name, role = session['user'][6], error_message = "There is no book with this title!")
         if authors:
             if session['user'][0] == 11111:
                 with sqlite3.connect('database.db') as conn:
                     cursor = conn.cursor()
-                    cursor.execute("SELECT * FROM books WHERE authors LIKE ?", (f'%{authors}%',))
+                    cursor.execute("SELECT * FROM books WHERE authors LIKE ? GROUP BY title", (f'%{authors}%',))
+                results = cursor.fetchall()            
             else:
                 with sqlite3.connect('database.db') as conn:
                     cursor = conn.cursor()
                     cursor.execute("SELECT * FROM books WHERE authors LIKE ? AND school_id=?", (f'%{authors}%',session['user'][5],))
-            results = cursor.fetchall()
+                results = cursor.fetchall()
             if not results:
                 return render_template('home.html', user_name=user_name, role = session['user'][6], error_message = "There are no books by this author!")
         if theme_categories:
             if session['user'][0] == 11111:
                 with sqlite3.connect('database.db') as conn:
                     cursor = conn.cursor()
-                    cursor.execute("SELECT * FROM books WHERE theme_categories LIKE ?", (f'%{theme_categories}%',))
+                    cursor.execute("SELECT * FROM books WHERE theme_categories LIKE ? GROUP BY title", (f'%{theme_categories}%',))
+                results = cursor.fetchall()            
             else:
                 with sqlite3.connect('database.db') as conn:
                     cursor = conn.cursor()
                     cursor.execute("SELECT * FROM books WHERE theme_categories LIKE ? AND school_id=?", (f'%{theme_categories}%',session['user'][5],))
-            results = cursor.fetchall()
+                results = cursor.fetchall()
             if not results:
                 return render_template('home.html', user_name=user_name, role = session['user'][6], error_message="Book Categories are: Fiction, Non-Fiction, Mystery, Thriller, Biography, History, Science Fiction, Romance, Cooking, Poetry. It is important to spell them correctly!")
         if copies:
             if session['user'][0] == 11111:
                 with sqlite3.connect('database.db') as conn:
                     cursor = conn.cursor()
-                    cursor.execute("SELECT * FROM books WHERE copies=?", (copies,))
+                    cursor.execute("SELECT * FROM books WHERE copies=? GROUP BY title", (copies,))
+                results = cursor.fetchall()
             else:
                 with sqlite3.connect('database.db') as conn:
                     cursor = conn.cursor()
                     cursor.execute("SELECT * FROM books WHERE copies=? AND school_id=?", (copies,session['user'][5],))
-            results = cursor.fetchall()
+                results = cursor.fetchall()
         if not results:
             return render_template('search_results.html', user_name=user_name, role = session['user'][6], error_message="Not found.. Sorry")
         else:
@@ -649,13 +653,13 @@ def new_borrowing(book_id, title, student_id, start_of_week, end_of_week, copies
 def book_operations():
     if request.method == 'GET':
         user_name = session['user_name']
-        isbn = request.args.get('isbn')
+        book_id = request.args.get('book_id')
         
         with sqlite3.connect('database.db') as conn:
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM books WHERE isbn = ? AND school_id=?", (isbn, session['user'][5]))
+            cursor.execute("SELECT * FROM books WHERE book_id = ?", (book_id,))
         book = cursor.fetchone()  
-        session['book_id'] = book[0]
+        session['book_id'] = book_id
         session['title'] = book[2]
         session['copies'] = book[6]
         if book[0]:

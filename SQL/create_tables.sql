@@ -1,7 +1,7 @@
 -- Create the 'users' table
 CREATE TABLE IF NOT EXISTS users (
-    user_id INTEGER PRIMARY KEY,
-    user_name TEXT NOT NULL,
+    user_id INTEGER UNIQUE PRIMARY KEY,
+    user_name TEXT UNIQUE NOT NULL,
     user_password TEXT NOT NULL,
     name TEXT NOT NULL,
     age INTEGER NOT NULL,
@@ -13,21 +13,21 @@ CREATE TABLE IF NOT EXISTS users (
 
 -- Create the 'schools' table
 CREATE TABLE IF NOT EXISTS schools (
-    school_id INTEGER PRIMARY KEY,
-    school_name TEXT NOT NULL,
+    school_id INTEGER UNIQUE PRIMARY KEY,
+    school_name TEXT UNIQUE NOT NULL,
     postcode TEXT NOT NULL,
     town TEXT NOT NULL,
     telephone INTEGER NOT NULL,
     email TEXT NOT NULL,
     principal_name TEXT NOT NULL,
     operator_name TEXT NOT NULL,
-    admin_id TEXT NOT NULL
+    admin_id TEXT UNIQUE NOT NULL
 );
 
 -- Create the 'authors_per_category' table
 CREATE TABLE IF NOT EXISTS bookids_AND_authors_per_category (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    theme_category TEXT,
+    theme_category TEXT UNIQUE,
     authors TEXT,
     book_ids TEXT
 );
@@ -35,12 +35,12 @@ CREATE TABLE IF NOT EXISTS bookids_AND_authors_per_category (
 -- Create the 'authors' table
 CREATE TABLE IF NOT EXISTS authors (
     author_id INTEGER PRIMARY KEY AUTOINCREMENT,
-    author TEXT
+    author TEXT UNIQUE
 );
 
 -- Create the 'books' table
 CREATE TABLE IF NOT EXISTS books (
-    book_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    book_id INTEGER UNIQUE PRIMARY KEY AUTOINCREMENT,
     isbn TEXT,
     title TEXT,
     authors TEXT,
@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS books (
 
 -- Create the 'reports' table
 CREATE TABLE IF NOT EXISTS reports (
-    report_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    report_id INTEGER UNIQUE PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
     book_id INTEGER NOT NULL,
     title TEXT NOT NULL,
@@ -73,7 +73,7 @@ CREATE TABLE IF NOT EXISTS reports (
 
 -- Create the 'ratings' table
 CREATE TABLE IF NOT EXISTS ratings (
-    rating_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    rating_id INTEGER UNIQUE PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
     book_id INTEGER NOT NULL,
     title TEXT NOT NULL,

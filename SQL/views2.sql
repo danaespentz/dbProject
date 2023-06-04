@@ -1,4 +1,3 @@
-DROP VIEW borrowings_per_category;
 CREATE VIEW IF NOT EXISTS borrowings_per_category AS
 SELECT DISTINCT U.name AS name, B.theme_category AS category
 FROM bookids_AND_authors_per_category B
