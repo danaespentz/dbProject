@@ -16,6 +16,7 @@ Listed alphabetically:
 - Python 3.9.2
 - Flask 2.2.3
 - Werkzeug 2.2.3
+- Faker==18.5.1
 
 ## ER-Diagram
 
@@ -34,7 +35,7 @@ Listed alphabetically:
 ### Download all required libraries
 
 ```bash
-	$ ./requirements
+	$ pip3 install -r requirements.txt
 ```
 
 ### Run the following files to create all sql queries and run the app (at this spesific order !).
